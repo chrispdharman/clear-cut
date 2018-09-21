@@ -101,31 +101,53 @@ def rotIm(img):
     return np.rot90(img, 1, (1,0))
 
 # function to calculate the smallest kernel size for th given image
-def calcKernelSize(imgShape):
-    img_h = imgShape[0]
-    img_w = imgShape[1]
+def calcKernelSize(img):
+    # determine image size
+    print("Image size: ", img.shape)
+    img_h = img.shape[0]
+    img_w = img.shape[1]
+    newImg = img
 
     # determine lowest denominator in image height
     k_h = 2
-    while( img_h % k_h == 0 is False ):
+    while( (img_h % k_h == 0) is False ):
         k_h = k_h + 1
-        if (k_h > img_h):
+        if (k_h > img_h/2):
             print("Error: the image height is a prime number. Cannot determine pooling kernel size.")
-            exit()
+
+            # function to remove one pixel layer off the image "height"
+            newImg = img_crop(img, edge="h")
+            k_h = 2
+            break;
 
     # determine lowest denominator in image height
     k_w = 2
-    while (img_w % k_w == 0 is False):
+    while ( (img_w % k_w) == 0 is False ):
         k_w = k_w + 1
-        if (k_w > img_w):
+        if (k_w > img_w/2):
             print("Error: the image width is a prime number. Cannot determine pooling kernel size.")
-            exit()
 
-    return k_h, k_w
+            # function to remove one pixel layer off the image "width"
+            newImg = img_crop(img, edge = "w")
+            k_w = 2
+            break;
+
+    print("Newish shape=", newImg.shape)
+    return k_h, k_w, newImg
 
 # determine average image size
-def imgMean(imgShp):
-    return (imgShp[0]+imgShp[1])/2
+def img_mean(imgshp):
+    return (imgshp[0]+imgshp[1])/2
+
+# cut off pixel pixel of the image and return it
+def img_crop(im, edge = "both"):
+    if edge=="h":
+        new_image = im[:im.shape[0]-1, :, :]
+    elif edge=="w":
+        new_image = im[:, :im.shape[1]-1, :]
+    else:
+        new_image = im[:im.shape[0]-1, :im.shape[1]-1, :]
+    return new_image
 
 # main routine
 def main():
@@ -158,9 +180,9 @@ def main():
         print("AttributeError: ", err)
 
     # check if the image is too small to be pooled, then pool the image
-    while (imgMean(image.shape) > 500):
+    while img_mean(image.shape) > 500:
         # calculate the smallest kernel size that fits into the image
-        krn_h, krn_w = calcKernelSize(image.shape)
+        krn_h, krn_w, image = calcKernelSize(image)
         print("krn_h=", krn_h, ", krn_w=", krn_w)
 
         # reduce image size, given calculated kernel (max pooling)
