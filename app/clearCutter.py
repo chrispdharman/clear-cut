@@ -74,9 +74,33 @@ def traceObjectsInImage(origImage):
     plt.figure()
     plt.imshow(mrgIm2)
 
+    # reduce gradient array to original image shape. Max pool gradient array using 2x2 kernel
+    edge_array = block_reduce(mrgIm2, (2, 2), np.max)
+
+    # append 0s (non-edge pixels) to any missing columns/rows
+    x_miss = origImage.shape[0] - edge_array.shape[0]
+    if x_miss == 0:
+        print("Same number of rows. Good!")
+    elif x_miss > 0:
+        print("Lost rows in compressing gradient. It can happen! Attempting to automatically dealing with it.")
+        edge_array = np.concatenate((edge_array, np.zeros((1, edge_array.shape[1]))), axis = 0)
+    else:
+        print("Gained rows in compressing gradient. Doesn't make sense!")
+        exit()
+
+    y_miss = origImage.shape[1] - edge_array.shape[1]
+    if y_miss == 0:
+        print("Same number of columns. Good!")
+    elif y_miss > 0:
+        print("Lost columns in compressing gradient. It can happen! Attempting to automatically dealing with it.")
+        edge_array = np.concatenate((edge_array, np.zeros((edge_array.shape[0], 1))), axis=1)
+    else:
+        print("Gained columns in compressing gradient. Doesn't make sense!")
+        exit()
+
     # return an array of 0s (non-edges) and 1s (edges), same shape as passed in image
-    print("Is ",origImage.shape," = ",mrgIm2.shape,"?")
-    return mrgIm2
+    print("Is ",origImage.shape," = ",edge_array.shape,"?")
+    return edge_array
 
 # Merge gradImage RGB channels to one image
 def mergeChannelsTracedImage(grdImg, origShape):
@@ -122,7 +146,7 @@ def calcKernelSize(img):
             # function to remove one pixel layer off the image "height"
             newImg = img_crop(img, edge="h")
             k_h = 2
-            break;
+            break
 
     # determine lowest denominator in image height
     k_w = 2
@@ -134,7 +158,7 @@ def calcKernelSize(img):
             # function to remove one pixel layer off the image "width"
             newImg = img_crop(img, edge = "w")
             k_w = 2
-            break;
+            break
 
     print("Newish shape=", newImg.shape)
     return k_h, k_w, newImg
@@ -164,10 +188,10 @@ def main():
     #test_labels = np.asarray(mnist.test.labels, dtype=np.int32)
 
     # import single image
-    imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/Bob.jpeg"
+    #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/Bob.jpeg"
     #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/colorful1.jpeg"
     #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/john1.jpg"
-    imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/minimal1.jpg"
+    #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/minimal1.jpg"
     imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/heathers_cats.jpg"
     imageRaw = Image.open(imagePath)
     image = np.array(imageRaw)
@@ -210,11 +234,13 @@ def main():
         pdict['im_w' + str(k)] = image.shape[1]
         pdict['im_kern_h' + str(k)] = krn_h
         pdict['im_kern_w' + str(k)] = krn_w
+    # note that the final k is stored in "k"
 
     # print dictionary
     for key, value in pdict.items():
         if "array" not in key:
-            print(key,": \t",value)
+            #print(key,": \t",value)
+            continue
 
     # View raw image
     plt.figure()
@@ -232,7 +258,12 @@ def main():
     #plt.clf()
 
     # execute clearCut method
-    traceObjectsInImage(image) # later think about implementing different methods as an argument
+    edgy_images = traceObjectsInImage(image) # later think about implementing different methods as an argument
+
+    # mask original image with edge array
+    image[:,:,0][edgy_images > 0.] = 255
+    plt.figure()
+    plt.imshow(image)
     plt.show()
     exit()
 
