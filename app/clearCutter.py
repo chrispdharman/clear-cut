@@ -74,6 +74,10 @@ def traceObjectsInImage(origImage):
     plt.figure()
     plt.imshow(mrgIm2)
 
+    # return an array of 0s (non-edges) and 1s (edges), same shape as passed in image
+    print("Is ",origImage.shape," = ",mrgIm2.shape,"?")
+    return mrgIm2
+
 # Merge gradImage RGB channels to one image
 def mergeChannelsTracedImage(grdImg, origShape):
     # make image of correct shape
@@ -161,10 +165,10 @@ def main():
 
     # import single image
     imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/Bob.jpeg"
-    imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/minimal1.jpg"
     #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/colorful1.jpeg"
     #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/john1.jpg"
-    #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/heathers_cats.jpg"
+    imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/minimal1.jpg"
+    imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/heathers_cats.jpg"
     imageRaw = Image.open(imagePath)
     image = np.array(imageRaw)
     print("Image size: ", image.shape)
@@ -179,8 +183,18 @@ def main():
     except AttributeError as err:
         print("AttributeError: ", err)
 
+    # create dictionary to store the history of pooled images
+    pdict = {}
+    k = 0
+    pdict['im_array'+str(k)] = image
+    pdict['im_edge_array'+str(k)] = np.zeros(image.shape)
+    pdict['im_h'+str(k)] = image.shape[0]
+    pdict['im_w'+str(k)] = image.shape[1]
+    pdict['im_kern_h' + str(k)] = 'N/A'
+    pdict['im_kern_w' + str(k)] = 'N/A'
     # check if the image is too small to be pooled, then pool the image
     while img_mean(image.shape) > 500:
+        k = k + 1
         # calculate the smallest kernel size that fits into the image
         krn_h, krn_w, image = calcKernelSize(image)
         print("krn_h=", krn_h, ", krn_w=", krn_w)
@@ -188,6 +202,19 @@ def main():
         # reduce image size, given calculated kernel (max pooling)
         image = block_reduce(image, (krn_h, krn_w, 1), np.max)
         print("New shape=",image.shape)
+
+        # update dictionary
+        pdict['im_array' + str(k)] = image
+        pdict['im_edge_array' + str(k)] = np.zeros(image.shape)
+        pdict['im_h' + str(k)] = image.shape[0]
+        pdict['im_w' + str(k)] = image.shape[1]
+        pdict['im_kern_h' + str(k)] = krn_h
+        pdict['im_kern_w' + str(k)] = krn_w
+
+    # print dictionary
+    for key, value in pdict.items():
+        if "array" not in key:
+            print(key,": \t",value)
 
     # View raw image
     plt.figure()
