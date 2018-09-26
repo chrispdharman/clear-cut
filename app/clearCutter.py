@@ -206,12 +206,11 @@ def main():
             image=np.rot90(np.rot90(image))
     except AttributeError as err:
         print("AttributeError: ", err)
+    imageRaw = image
 
     # create dictionary to store the history of pooled images
     pdict = {}
     k = 0
-    pdict['im_array'+str(k)] = image
-    pdict['im_edge_array'+str(k)] = np.zeros(image.shape)
     pdict['im_h'+str(k)] = image.shape[0]
     pdict['im_w'+str(k)] = image.shape[1]
     pdict['im_kern_h' + str(k)] = 'N/A'
@@ -221,15 +220,13 @@ def main():
         k = k + 1
         # calculate the smallest kernel size that fits into the image
         krn_h, krn_w, image = calcKernelSize(image)
-        print("krn_h=", krn_h, ", krn_w=", krn_w)
+        #print("krn_h=", krn_h, ", krn_w=", krn_w)
 
         # reduce image size, given calculated kernel (max pooling)
         image = block_reduce(image, (krn_h, krn_w, 1), np.max)
-        print("New shape=",image.shape)
+        #print("New shape=",image.shape)
 
         # update dictionary
-        pdict['im_array' + str(k)] = image
-        pdict['im_edge_array' + str(k)] = np.zeros(image.shape)
         pdict['im_h' + str(k)] = image.shape[0]
         pdict['im_w' + str(k)] = image.shape[1]
         pdict['im_kern_h' + str(k)] = krn_h
@@ -238,9 +235,8 @@ def main():
 
     # print dictionary
     for key, value in pdict.items():
-        if "array" not in key:
-            #print(key,": \t",value)
-            continue
+        #print(key,": \t",value)
+        continue
 
     # View raw image
     plt.figure()
@@ -257,13 +253,40 @@ def main():
     #plt.show()
     #plt.clf()
 
-    # execute clearCut method
+
+    # MAKE AS FUNCTION PASSING IN AND RETURNING pdict
+    # execute clearCut method and store in edge array for masking
     edgy_images = traceObjectsInImage(image) # later think about implementing different methods as an argument
+    # using pooling history, reconstruct edgy array to the same size as the original image
+    pdict['im_edge_array' + str(k)] = edgy_images
+    while k > 0:
+        # get image and kern size values
+        im_h = pdict['im_h'+str(k-1)]
+        im_w = pdict['im_w' + str(k-1)]
+        krn_h = pdict['im_kern_h' + str(k)]
+        krn_w = pdict['im_kern_w' + str(k)]
+        edg_size = pdict['im_edge_array' + str(k)].shape
+        print("edg_size=",edg_size)
+
+        # generate scaled up edge array
+        new_edge_array = np.zeros((im_h, im_w))
+        for i in range(0, edg_size[0]):
+            for j in range(0, edg_size[1]):
+                #print("i=", i, ", j=", j, "  --- ", int(krn_h * i), " & ", int(krn_w * j))
+                if pdict['im_edge_array' + str(k)][i,j] > 0.:
+                    new_edge_array[int(krn_h * (i + 0.5)), int(krn_w * (j + 0.5))] = 1.
+
+        # update k before loop ends
+        k = k - 1
+        pdict['im_edge_array' + str(k)] = new_edge_array
+
+    plt.figure()
+    plt.imshow(pdict['im_edge_array0'])
 
     # mask original image with edge array
-    image[:,:,0][edgy_images > 0.] = 255
+    imageRaw[:,:,0][pdict['im_edge_array0'] > 0.] = 255
     plt.figure()
-    plt.imshow(image)
+    plt.imshow(imageRaw)
     plt.show()
     exit()
 
