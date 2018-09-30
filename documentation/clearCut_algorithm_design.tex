@@ -34,8 +34,21 @@
 \tableofcontents
 
 \newpage
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%% INPUT DATA DESCRIPTION %%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \section{Input data}
-The input data is an image of arbitrary size, $M \times N$. Most images have three channels (RGB = ``Red-Green-Blue"), this means an array with three $M \times N$ arrays. Images with exif data are checked and modified so that the image is imported in the intended orientation, e.g. in case the image is a photo taken from a phone camera.
+The input data is an image of arbitrary size, $M \times N$, where $M$ is the horizontal dimension and $N$ is the vertical dimension of the image. Most images have three channels (RGB = ``Red-Green-Blue"), this means an array with three $M \times N$ arrays. Images with exif data are checked and modified so that the image is imported in the intended orientation, e.g. in case the image is a photo taken from a phone camera.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%% IMAGE SIZE REDUCTION %%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Image size reduction}
 To improve the efficiency of the edge detection algorithm, the image size is reduced to that the average image dimension is less than 500 pixels in length. The final image size to be thrown into the algorithm is $M_{\text{eff}} \times N_{\text{eff}}$, where
@@ -45,14 +58,24 @@ To improve the efficiency of the edge detection algorithm, the image size is red
 \end{equation}
 The image is currently reduced slowly by max pooling. This relies on calculating the smallest kernel size and repeating the max pooling process until the condition in Equation~\ref{im_reduction_condition} is satisfied. This can be implemented more effectively by calculating the smallest kernel that would satisfy the condition in Equation~\ref{im_reduction_condition} after just one implementation of max pooling.
 
-As it currently exists, the process consists of determining the smallest number that divides the height (width) of the image to return an integer. If there is no such factor, i.e. the height (width) is a prime number, the image is cropped by removing the single pixel row (column) at the $M_{\text{eff}}^{th}$ ($N_{\text{eff}}^{th}$) index. By definition this would result in that image dimension being divisible by 2, which is then the number of pixels of the smallest kernel in that dimension.
+As it currently exists, the process consists of determining the smallest number that divides the height (width) of the image to return an integer. If there is no such factor, i.e. the height (width) is a prime number, the image is cropped by removing the single pixel row (column) at the $M_{\text{eff}}^{th}$ ($N_{\text{eff}}^{th}$) index. By definition this would result in that image dimension being divisible by 2, which is then the number of pixels of the smallest kernel in that dimension. Throughout the image reduction process, the values ~{($M_{\text{eff}}$,~$N_{\text{eff}}$,~$M_{\text{kernel}}$,~$N_{\text{kernel}}$)} are stored in a Python dictionary to keep a record of the image reduction history.
 
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%% EDGE DETECTION PROCEDURE %%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Edge detection procedure}
+\subsection{The gradient image}
+In order to determine the edges of an image, we must choose a criteria to distinguishing a single pixel located at $(i_0,j_0)$ as being part of ``an edge''. We would refer to such pixels as ``edge pixels'' or ``non-edge pixels'' in future. This is achieved by mathematically comparing its value to those of its surrounding pixels. The simplest method to adopt is to consider only the pixels neighbouring pixels $(i,j)$, i.e. any combination of pixels that satisfy
+\begin{equation}
+i_0-1 \leq i \leq i_0+1\text{, and }j_0-1 \leq j \leq j_0+1\text{.}
+\end{equation}
+A more advanced technique could extend the range of neighbouring pixels. For a pixel not located on the perimeter of the image, it would have 8 neighbouring pixels. 
+
 \subsection{Dealing with channels}
-Each of the RGB channels have the edge detection algorithm applied to them.\\
+Each of the RGB channels have the edge detection algorithm applied to them. \\
 
 
 
