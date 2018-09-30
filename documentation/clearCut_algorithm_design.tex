@@ -1,0 +1,78 @@
+\documentclass[11pt]{article}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{pifont}
+\usepackage{setspace}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{color}
+\usepackage{sectsty}
+% \usepackage{raisebox}
+% \usepackage{geometry}
+% \usepackage{fancyhdr}
+% \pagestyle{fancy}
+% \lfoot{\emph{CV: Christopher Harman after discussion with Dr. S. Flockton}}
+\definecolor{darkblue}{rgb}{0.,0.,0.7}
+\sectionfont{\color{darkblue}}
+\subsectionfont{\color{darkblue}}
+
+\oddsidemargin  -0.25in
+\evensidemargin 0.25in
+\textwidth      7.0in
+\headheight     0.0in
+\topmargin      -0.8in
+%\textheight=9.5in
+\textheight=10.0in
+\onehalfspacing
+
+\begin{document}
+\thispagestyle{empty}
+
+\title{Clear Cut: Algorithm Design}
+% \author{Christopher Harman}
+\maketitle
+\tableofcontents
+
+\newpage
+\section{Input data}
+The input data is an image of arbitrary size, $M \times N$. Most images have three channels (RGB = ``Red-Green-Blue"), this means an array with three $M \times N$ arrays. Images with exif data are checked and modified so that the image is imported in the intended orientation, e.g. in case the image is a photo taken from a phone camera.
+
+\subsection{Image size reduction}
+To improve the efficiency of the edge detection algorithm, the image size is reduced to that the average image dimension is less than 500 pixels in length. The final image size to be thrown into the algorithm is $M_{\text{eff}} \times N_{\text{eff}}$, where
+\begin{equation}
+\dfrac{M_{\text{eff}} N_{\text{eff}}}{2}<500~\text{pxl} \text{.}
+\label{im_reduction_condition}
+\end{equation}
+The image is currently reduced slowly by max pooling. This relies on calculating the smallest kernel size and repeating the max pooling process until the condition in Equation~\ref{im_reduction_condition} is satisfied. This can be implemented more effectively by calculating the smallest kernel that would satisfy the condition in Equation~\ref{im_reduction_condition} after just one implementation of max pooling.
+
+As it currently exists, the process consists of determining the smallest number that divides the height (width) of the image to return an integer. If there is no such factor, i.e. the height (width) is a prime number, the image is cropped by removing the single pixel row (column) at the $M_{\text{eff}}^{th}$ ($N_{\text{eff}}^{th}$) index. By definition this would result in that image dimension being divisible by 2, which is then the number of pixels of the smallest kernel in that dimension.
+
+
+
+
+\section{Edge detection procedure}
+\subsection{Dealing with channels}
+Each of the RGB channels have the edge detection algorithm applied to them.\\
+
+
+
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{|c|l|}
+\hline
+{\bf DevOps} & Best practices and administration of the Atlassian Suite, e.g. Jira, Confluence\\
+\hline
+{\bf Non-functional Testing} & Performance testing of a variety of applications (e.g. HPE LoadRunner, JMeter)\\
+\hline
+{\bf Automation/Scripting} & Developed two software solutions using Java SE 8 and Excel's VBA macro\\
+\hline
+{\bf API Programming} & Utilising RESTful services from online documentation within scripts\\
+\hline
+{\bf Deep Learning} & Using Google's TensorFlow framework (python) for predictive analytics\\
+\hline
+\end{tabular}
+\end{center}
+\label{default}
+\end{table}
+
+\end{document}

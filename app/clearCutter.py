@@ -148,7 +148,7 @@ def calcKernelSize(img):
             k_h = 2
             break
 
-    # determine lowest denominator in image height
+    # determine lowest denominator in image width
     k_w = 2
     while ( (img_w % k_w) == 0 is False ):
         k_w = k_w + 1
@@ -269,22 +269,27 @@ def main():
         print("edg_size=",edg_size)
 
         # generate scaled up edge array
-        new_edge_array = np.zeros((im_h, im_w))
+        new_edge_array = pdict['im_edge_array' + str(k)].resize((im_h, im_w))
+        '''new_edge_array = np.zeros((im_h, im_w))
         for i in range(0, edg_size[0]):
             for j in range(0, edg_size[1]):
                 #print("i=", i, ", j=", j, "  --- ", int(krn_h * i), " & ", int(krn_w * j))
                 if pdict['im_edge_array' + str(k)][i,j] > 0.:
-                    new_edge_array[int(krn_h * (i + 0.5)), int(krn_w * (j + 0.5))] = 1.
+                    new_edge_array[int(krn_h * i), int(krn_w * j)] = 1.
 
         # update k before loop ends
         k = k - 1
-        pdict['im_edge_array' + str(k)] = new_edge_array
+        pdict['im_edge_array' + str(k)] = new_edge_array'''
 
+    print(pdict['im_edge_array3'][4:11,0])
+    print(pdict['im_edge_array2'][8:22, 0])
+    print(pdict['im_edge_array1'][16:44, 0])
+    print(pdict['im_edge_array0'][32:88, 0])
     plt.figure()
     plt.imshow(pdict['im_edge_array0'])
 
     # mask original image with edge array
-    imageRaw[:,:,0][pdict['im_edge_array0'] > 0.] = 255
+    imageRaw[:,:,0][pdict['im_edge_array0'] > 0.3] = 255
     plt.figure()
     plt.imshow(imageRaw)
     plt.show()
