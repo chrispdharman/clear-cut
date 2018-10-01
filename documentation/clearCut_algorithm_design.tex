@@ -72,7 +72,9 @@ In order to determine the edges of an image, we must choose a criteria to distin
 \begin{equation}
 i_0-1 \leq i \leq i_0+1\text{, and }j_0-1 \leq j \leq j_0+1\text{.}
 \end{equation}
-A more advanced technique could extend the range of neighbouring pixels. For a pixel not located on the perimeter of the image, it would have 8 neighbouring pixels. 
+A more advanced technique could extend the range of neighbouring pixels. For a pixel not located on the perimeter of the image, it would have 8 neighbouring pixels.
+
+The mathematical quantity we are interested in is the difference in value between the pixels and it's neighbouring pixels. It is then believe that a (sharp) edge pixel would be identified as having a large difference in value between any neighbouring pixel and itself. With 8 neighbouring pixels, we would have to calculate 8 gradients per pixel. It turns out that we can more efficient in calculating the gradients and only count 4 instead. This is because when the neighbouring pixel has the gradient calculated, it would be the same (bar a sign change). This means that we are double-counting the gradients; therefore we need only calculate 4 gradients. For a generic pixel at $(i,j)$, the difference is value between pixels $(i-1,j-1)$, $(i+1,j)$, $(i,j+1)$, and $(i+1,j+1)$ is calculated. Not that not all gradients can be calculated if the pixel under consideration is along the perimeter of the image. See image for visual aid.
 
 \subsection{Dealing with channels}
 Each of the RGB channels have the edge detection algorithm applied to them. \\
