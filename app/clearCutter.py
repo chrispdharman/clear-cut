@@ -131,7 +131,7 @@ def rotIm(img):
 # function to calculate the smallest kernel size for th given image
 def calcKernelSize(img):
     # determine image size
-    print("Image size: ", img.shape)
+    #print("Image size: ", img.shape)
     img_h = img.shape[0]
     img_w = img.shape[1]
     newImg = img
@@ -160,7 +160,7 @@ def calcKernelSize(img):
             k_w = 2
             break
 
-    print("Newish shape=", newImg.shape)
+    #print("Newish shape=", newImg.shape)
     return k_h, k_w, newImg
 
 # determine average image size
@@ -177,6 +177,50 @@ def img_crop(im, edge = "both"):
         new_image = im[:im.shape[0]-1, :im.shape[1]-1, :]
     return new_image
 
+# determine positions of edge vectors, return (? x 2) array
+def edgePxlPos(edge_img):
+    pos_vec = []
+    shape = edge_img.shape
+    for i in range(0,shape[0]):
+        for j in range(0,shape[1]):
+            if edge_img[i,j] > 0.:
+                pos_vec.append([i,j])
+    pos_vec = np.array(pos_vec)
+    print("Array: ",pos_vec)
+    print("Shape: ",pos_vec.shape)
+    return pos_vec
+
+# determine positions of edge vectors, return (? x 2) array.
+# edge_bias details how many edge pixels must be adjacent in ...
+# ... the same direction before considering it an extendable edge
+def edgeFiller(edge_img, edge_pos, edge_bias = 10):
+    # iterate through edge pixels
+    for k in range(0, edge_pos.shape[0]):
+        coord = edge_pos[k]
+        print("@",coord)
+
+        # loop around the neighbouring pixels (excluding the pixel itself)
+        for i in range(0, 8):
+            # set increment in x, y, multiplier, and initial edge value
+            dx = i % 3 - 1
+            dy = i // 3 - 1
+            mult = 1
+            edge_value = 0.03
+            if not i == 4:
+                # reiterate with an increasing multiplier until a non-edge pixel is found
+                try:
+                    while edge_img[coord[0] + mult * dx, coord[1] + mult * dy] > 0.:
+                        #print("\t ...multiplying edge_value, step in same direction")
+                        mult = mult + 1
+                    # write the value of (mult * edge_value) to non-edge pixel, subject to the edge_bias parameter
+                    if (mult > edge_bias):
+                        #print("\t ...writing out (edge_value x ", mult, ")")
+                        edge_img[coord[0] + i % 3 - 1, coord[1] + i // 3 - 1] = mult * edge_value
+                except(IndexError):
+                    #print("Edge reached perimeter of the image. No need to fill this edge.")
+                    continue
+    return edge_img
+
 # main routine
 def main():
     # load data
@@ -188,10 +232,10 @@ def main():
     #test_labels = np.asarray(mnist.test.labels, dtype=np.int32)
 
     # import single image
-    #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/Bob.jpeg"
-    #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/colorful1.jpeg"
-    #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/john1.jpg"
-    #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/minimal1.jpg"
+    imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/Bob.jpeg"
+    imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/colorful1.jpeg"
+    imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/john1.jpg"
+    imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/minimal1.jpg"
     imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/heathers_cats.jpg"
     imageRaw = Image.open(imagePath)
     image = np.array(imageRaw)
@@ -257,6 +301,23 @@ def main():
     # MAKE AS FUNCTION PASSING IN AND RETURNING pdict
     # execute clearCut method and store in edge array for masking
     edgy_images = traceObjectsInImage(image) # later think about implementing different methods as an argument
+
+    # use direction bias to fill in between edge pixels (possible edges)
+    # list of position vectors for edge pixels
+    posList = edgePxlPos(edgy_images)
+    new_edgy_images = edgeFiller(edgy_images, posList)
+    plt.figure()
+    plt.imshow(new_edgy_images > 0.)
+
+    # mask original image with edge array (original edges are red, filled edge are blue)
+    image[:, :, 2][new_edgy_images > 0.3] = 255
+    image[:, :, 0][edgy_images > 0.3] = 255
+    image[:, :, 2][edgy_images > 0.3] = 0
+    plt.figure()
+    plt.imshow(image)
+    plt.show()
+    exit()
+
     # using pooling history, reconstruct edgy array to the same size as the original image
     pdict['im_edge_array' + str(k)] = edgy_images
     while k > 0:
@@ -293,7 +354,6 @@ def main():
     plt.figure()
     plt.imshow(imageRaw)
     plt.show()
-    exit()
 
     # view a random image of the data
     plt.clf()
