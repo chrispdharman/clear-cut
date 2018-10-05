@@ -1,5 +1,6 @@
 #import tensorflow as tf
 import numpy as np
+from random import randint
 from skimage.measure import block_reduce
 from random import randint
 import matplotlib
@@ -58,21 +59,21 @@ def traceObjectsInImage(origImage):
     imCut = 0.08
     #imCut = 0.06
     # display gradient image
-    plt.figure()
+    '''plt.figure()
     plt.imshow(np.absolute(gradImage.T), interpolation="nearest")
     plt.figure()
-    plt.imshow(np.multiply((np.absolute(gradImage.T) < (1-imCut)*255),(np.absolute(gradImage.T) > imCut*255)))
+    plt.imshow(np.multiply((np.absolute(gradImage.T) < (1-imCut)*255),(np.absolute(gradImage.T) > imCut*255)))'''
 
     # merge channels
     mrgIm1 = mergeChannelsTracedImage(gradImage.T, origImage.shape)
-    plt.figure()
-    plt.imshow(mrgIm1)
+    #plt.figure()
+    #plt.imshow(mrgIm1)
 
     mrgIm2 = mergeChannelsTracedImage(
         np.multiply((np.absolute(gradImage.T) < (1 - imCut) * 255), (np.absolute(gradImage.T) > imCut * 255)),
         origImage.shape)
-    plt.figure()
-    plt.imshow(mrgIm2)
+    #plt.figure()
+    #plt.imshow(mrgIm2)
 
     # reduce gradient array to original image shape. Max pool gradient array using 2x2 kernel
     edge_array = block_reduce(mrgIm2, (2, 2), np.max)
@@ -186,8 +187,8 @@ def edgePxlPos(edge_img):
             if edge_img[i,j] > 0.:
                 pos_vec.append([i,j])
     pos_vec = np.array(pos_vec)
-    print("Array: ",pos_vec)
-    print("Shape: ",pos_vec.shape)
+    #print("Array: ",pos_vec)
+    #print("Shape: ",pos_vec.shape)
     return pos_vec
 
 # determine positions of edge vectors, return (? x 2) array.
@@ -197,7 +198,7 @@ def edgeFiller(edge_img, edge_pos, edge_bias = 10):
     # iterate through edge pixels
     for k in range(0, edge_pos.shape[0]):
         coord = edge_pos[k]
-        print("@",coord)
+        #print("@",coord)
 
         # loop around the neighbouring pixels (excluding the pixel itself)
         for i in range(0, 8):
@@ -221,6 +222,74 @@ def edgeFiller(edge_img, edge_pos, edge_bias = 10):
                     continue
     return edge_img
 
+def randomPathEdgeRace(img, edgy_img):
+    # update the edge pixel position list
+    posList = edgePxlPos(edgy_img)
+
+    # pick random edge pixel to start from
+    initEdgePxl = posList[randint(0,posList.shape[0])]
+    print("Initial edge pixel=",initEdgePxl,"--> Value of ", edgy_img[initEdgePxl[0],initEdgePxl[1]])
+
+    # determine the smallest thickness around this initial pixel (the "race start line")
+    horizontal_thickness = pxlLen(edgy_img, initEdgePxl, [0, 1],
+                                  edgeLen = pxlLen(edgy_img, initEdgePxl, [0, -1]))
+    vertical_thickness = pxlLen(edgy_img, initEdgePxl, [1, 0],
+                                  edgeLen = pxlLen(edgy_img, initEdgePxl, [-1, 0]))
+    posGradient_thickness = pxlLen(edgy_img, initEdgePxl, [-1, 1],
+                                  edgeLen = pxlLen(edgy_img, initEdgePxl, [1, -1]))
+    negGradient_thickness = pxlLen(edgy_img, initEdgePxl, [1, 1],
+                                   edgeLen = pxlLen(edgy_img, initEdgePxl, [-1, -1]))
+
+    print("Horizontal= \t", horizontal_thickness)
+    print("Vertical= \t", vertical_thickness)
+    print("+ Gradient= \t", posGradient_thickness)
+    print("- Gradient= \t", negGradient_thickness)
+
+    rad = np.max([horizontal_thickness, vertical_thickness, posGradient_thickness, negGradient_thickness])
+
+    plt.figure()
+    edgy_img[initEdgePxl[0],initEdgePxl[1]]= 2.
+    plt.imshow(edgy_img[(initEdgePxl[0] - rad - 1):(initEdgePxl[0] + rad + 1),
+               (initEdgePxl[1] - rad -1):(initEdgePxl[1] + rad + 1)])
+    plt.show()
+
+    # pick (but remember) a direction orthogonal to the smallest thickness to tend the path toward)
+
+
+    exit()
+
+    # ensure we return the right array
+    if enclosedBool:
+        objPerimeter = edgePath
+    else:
+        objPerimeter = ""
+
+    return enclosedBool, objPerimeter
+
+# determine no. of pixels before non-edge pixel
+def pxlLen(edgy_img, init_pxl, pxl_dir, edgeLen = 1):
+    init_x, init_y = init_pxl
+    dx, dy = pxl_dir
+    dx_0, dy_0 = pxl_dir
+    while edgy_img[init_x + dx, init_y + dy] > 0.:
+        # increment value of edge length by 1
+        edgeLen = edgeLen + 1
+        dx = dx + dx_0
+        dy = dy + dy_0
+        print("@(",init_x + dx,",",init_y + dy,")=",edgy_img[init_x + dx, init_y + dy])
+
+        # break if too long
+        if edgeLen > 100:
+            print("Probably too large?")
+
+            # see if image shows this is the case
+            plt.figure()
+            plt.imshow(edgy_img[(init_x - edgeLen):(init_x + edgeLen), (init_y - edgeLen):(init_y + edgeLen)]>0.)
+            plt.show()
+            exit()
+
+    return edgeLen
+
 # main routine
 def main():
     # load data
@@ -233,10 +302,10 @@ def main():
 
     # import single image
     imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/Bob.jpeg"
-    imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/colorful1.jpeg"
-    imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/john1.jpg"
-    imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/minimal1.jpg"
-    imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/heathers_cats.jpg"
+    #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/colorful1.jpeg"
+    #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/john1.jpg"
+    #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/minimal1.jpg"
+    #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/heathers_cats.jpg"
     imageRaw = Image.open(imagePath)
     image = np.array(imageRaw)
     print("Image size: ", image.shape)
@@ -283,13 +352,13 @@ def main():
         continue
 
     # View raw image
-    plt.figure()
+    '''plt.figure()
     plt.imshow(image)
 
     # View rgb channels
     plt.figure()
     plt.imshow(np.rot90(
-        np.concatenate((np.concatenate((rotIm(image[:, :, 0]), rotIm(image[:, :, 1]))), rotIm(image[:, :, 2])))))
+        np.concatenate((np.concatenate((rotIm(image[:, :, 0]), rotIm(image[:, :, 1]))), rotIm(image[:, :, 2])))))'''
 
     # view a specific image of the data
     #plt.figure()
@@ -306,17 +375,27 @@ def main():
     # list of position vectors for edge pixels
     posList = edgePxlPos(edgy_images)
     new_edgy_images = edgeFiller(edgy_images, posList)
-    plt.figure()
-    plt.imshow(new_edgy_images > 0.)
+    '''plt.figure()
+    plt.imshow(new_edgy_images > 0.)'''
 
     # mask original image with edge array (original edges are red, filled edge are blue)
-    image[:, :, 2][new_edgy_images > 0.3] = 255
-    image[:, :, 0][edgy_images > 0.3] = 255
-    image[:, :, 2][edgy_images > 0.3] = 0
-    plt.figure()
-    plt.imshow(image)
-    plt.show()
-    exit()
+    #image[:, :, 2][new_edgy_images > 0.3] = 255
+    #image[:, :, 0][edgy_images > 0.3] = 255
+    #image[:, :, 2][edgy_images > 0.3] = 0
+    #plt.figure()
+    #plt.imshow(image)
+    #plt.show()
+
+    # determine closed edge paths
+    objNo = 0
+    while objNo < 3:
+        # run one iteration of random path edge race
+        objBool, objEdgeArray = randomPathEdgeRace(image, new_edgy_images)
+        if objBool:
+            print("An object was found :)")
+            objNo = objNo + 1
+        else:
+            print("No object was found :(")
 
     # using pooling history, reconstruct edgy array to the same size as the original image
     pdict['im_edge_array' + str(k)] = edgy_images
@@ -346,14 +425,14 @@ def main():
     print(pdict['im_edge_array2'][8:22, 0])
     print(pdict['im_edge_array1'][16:44, 0])
     print(pdict['im_edge_array0'][32:88, 0])
-    plt.figure()
+    '''plt.figure()
     plt.imshow(pdict['im_edge_array0'])
 
     # mask original image with edge array
     imageRaw[:,:,0][pdict['im_edge_array0'] > 0.3] = 255
     plt.figure()
     plt.imshow(imageRaw)
-    plt.show()
+    plt.show()'''
 
     # view a random image of the data
     plt.clf()
