@@ -228,27 +228,35 @@ def randomPathEdgeRace(img, edgy_img):
 
     # pick random edge pixel to start from
     initEdgePxl = posList[randint(0,posList.shape[0])]
+    pxl_lst = [0, 0, 0, 0]
     print("Initial edge pixel=",initEdgePxl,"--> Value of ", edgy_img[initEdgePxl[0],initEdgePxl[1]])
 
-    # determine the smallest thickness around this initial pixel (the "race start line")
-    horizontal_thickness = pxlLen(edgy_img, initEdgePxl, [0, 1],
-                                  edgeLen = pxlLen(edgy_img, initEdgePxl, [0, -1]))
-    vertical_thickness = pxlLen(edgy_img, initEdgePxl, [1, 0],
-                                  edgeLen = pxlLen(edgy_img, initEdgePxl, [-1, 0]))
-    posGradient_thickness = pxlLen(edgy_img, initEdgePxl, [-1, 1],
-                                  edgeLen = pxlLen(edgy_img, initEdgePxl, [1, -1]))
-    negGradient_thickness = pxlLen(edgy_img, initEdgePxl, [1, 1],
-                                   edgeLen = pxlLen(edgy_img, initEdgePxl, [-1, -1]))
+    # determine the pixels around this initial pixel in each direction
+    horizontal_lst = pxlLen(edgy_img, initEdgePxl, [0, 1],
+                          edge=pxlLen(edgy_img, initEdgePxl, [0, -1],  edge=np.expand_dims(initEdgePxl, axis=0)))
+    vertical_lst = pxlLen(edgy_img, initEdgePxl, [1, 0],
+                          edge=pxlLen(edgy_img, initEdgePxl, [-1, 0],  edge=np.expand_dims(initEdgePxl, axis=0)))
+    pos_grad_lst = pxlLen(edgy_img, initEdgePxl, [-1, 1],
+                          edge=pxlLen(edgy_img, initEdgePxl, [1, -1],  edge=np.expand_dims(initEdgePxl, axis=0)))
+    neg_grad_lst = pxlLen(edgy_img, initEdgePxl, [1, 1],
+                          edge=pxlLen(edgy_img, initEdgePxl, [-1, -1], edge=np.expand_dims(initEdgePxl, axis=0)))
 
-    print("Horizontal= \t", horizontal_thickness)
-    print("Vertical= \t", vertical_thickness)
-    print("+ Gradient= \t", posGradient_thickness)
-    print("- Gradient= \t", negGradient_thickness)
+    print("Horizontal length = \t", len(horizontal_lst))
+    print("Vertical length = \t", len(vertical_lst))
+    print("+ Gradient length = \t", len(pos_grad_lst))
+    print("- Gradient length = \t", len(neg_grad_lst))
+    pxl_lst = [horizontal_lst, vertical_lst, pos_grad_lst, neg_grad_lst]
+    pxl_radii = [len(horizontal_lst), len(vertical_lst),len(pos_grad_lst), len(neg_grad_lst)]
 
-    rad = np.max([horizontal_thickness, vertical_thickness, posGradient_thickness, negGradient_thickness])
+    rad = np.max(pxl_radii)
+    start_line = (pxl_lst[np.argmin(pxl_radii)])
+    #print("Start line shape = ", start_line.shape)
 
+    # view the initial pixel region with the start line and initial pixel "shown"
+    for i in range(0, len(start_line)):
+        edgy_img[start_line[i,0], start_line[i,1]] = 2.
+    edgy_img[initEdgePxl[0],initEdgePxl[1]]= 2.5
     plt.figure()
-    edgy_img[initEdgePxl[0],initEdgePxl[1]]= 2.
     plt.imshow(edgy_img[(initEdgePxl[0] - rad - 1):(initEdgePxl[0] + rad + 1),
                (initEdgePxl[1] - rad -1):(initEdgePxl[1] + rad + 1)])
     plt.show()
@@ -266,29 +274,25 @@ def randomPathEdgeRace(img, edgy_img):
 
     return enclosedBool, objPerimeter
 
-# determine no. of pixels before non-edge pixel
-def pxlLen(edgy_img, init_pxl, pxl_dir, edgeLen = 1):
+# determine the edge pixels before the first non-edge pixel in a pre-determined direction
+def pxlLen(edgy_img, init_pxl, pxl_dir, edge):
+    # initialise increments
     init_x, init_y = init_pxl
     dx, dy = pxl_dir
     dx_0, dy_0 = pxl_dir
+
+    #print("Ingoing edge: ", edge)
+
+    # store pixel positions in a list
     while edgy_img[init_x + dx, init_y + dy] > 0.:
+        edge = np.append(edge, np.array([[init_x + dx, init_y + dy]]), axis = 0)
         # increment value of edge length by 1
-        edgeLen = edgeLen + 1
         dx = dx + dx_0
         dy = dy + dy_0
-        print("@(",init_x + dx,",",init_y + dy,")=",edgy_img[init_x + dx, init_y + dy])
+        #print("@(",init_x + dx,",",init_y + dy,")=",edgy_img[init_x + dx, init_y + dy])
 
-        # break if too long
-        if edgeLen > 100:
-            print("Probably too large?")
-
-            # see if image shows this is the case
-            plt.figure()
-            plt.imshow(edgy_img[(init_x - edgeLen):(init_x + edgeLen), (init_y - edgeLen):(init_y + edgeLen)]>0.)
-            plt.show()
-            exit()
-
-    return edgeLen
+    #print("Outgoing edge: ", edge)
+    return edge
 
 # main routine
 def main():
@@ -301,10 +305,10 @@ def main():
     #test_labels = np.asarray(mnist.test.labels, dtype=np.int32)
 
     # import single image
-    imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/Bob.jpeg"
+    #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/Bob.jpeg"
     #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/colorful1.jpeg"
     #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/john1.jpg"
-    #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/minimal1.jpg"
+    imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/minimal1.jpg"
     #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/heathers_cats.jpg"
     imageRaw = Image.open(imagePath)
     image = np.array(imageRaw)
