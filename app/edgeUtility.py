@@ -196,7 +196,7 @@ def protPxl(pxl, max_cap):
         return pxl
 
 # determine positions of edge vectors, return (? x 2) array.
-def edgeKiller(edge_img, edge_pos, min_rad = 0):
+def edgeKiller(edge_img, edge_pos, min_rad = 1):
     # iterate through edge pixels
     for k in range(0, edge_pos.shape[0]):
         coord = edge_pos[k]
@@ -212,17 +212,22 @@ def edgeKiller(edge_img, edge_pos, min_rad = 0):
             # set increment in x, y, multiplier, and initial edge value
             dx = i % 3 - 1
             dy = i // 3 - 1
-            mult = 1
+            #mult = 1
             if not i == 4:
                 # reiterate with an increasing multiplier until a non-edge pixel is found
                 try:
-                    while edge_img[coord[0] + mult * dx, coord[1] + mult * dy] > 0.:
+                    #while edge_img[coord[0] + mult * dx, coord[1] + mult * dy] > 0.:
+                    if edge_img[coord[0] + mult * dx, coord[1] + mult * dy] > 0.:
                         #print("\t ...multiplying edge_value, step in same direction")
-                        mult = mult + 1
+                        #mult = mult + 1
                         count = count + 1
                 except(IndexError):
                     #print("Edge reached perimeter of the image. No need to fill this edge.")
                     continue
+
+        # work out if all surrounding pixels are non-edge pixels
+        exit()
+
         # change edge pixel to non-edge pixel if it is not surrounded by any other edge pixels
         #print("count=",count," min_rad=",min_rad)
         if count < (1 + 8 * min_rad):
