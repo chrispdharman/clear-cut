@@ -90,20 +90,21 @@ def main():
     edgy_images = traceObjectsInImage(image) # later think about implementing different methods as an argument
 
     # remove edge pixels that cannot possibly contain an edge (may need to change order with edgeFiller?)
-    edgy_images = edgeKiller(edgy_images, edgePxlPos(edgy_images))
+    edgy_images = edgeKiller(edgy_images)
 
     # use direction bias to fill in between edge pixels (possible edges)
-    edgy_images = edgeFiller(edgy_images, edgePxlPos(edgy_images))
-    '''plt.figure()
-    plt.imshow(new_edgy_images > 0.)'''
+    edgy_images = edgeFiller(edgy_images)
+    plt.figure()
+    plt.imshow(edgy_images > 0.)
+    plt.show()
 
     # mask original image with edge array (original edges are red, filled edge are blue)
     #image[:, :, 2][new_edgy_images > 0.3] = 255
     #image[:, :, 0][edgy_images > 0.3] = 255
     #image[:, :, 2][edgy_images > 0.3] = 0
-    #plt.figure()
-    #plt.imshow(image)
-    #plt.show()
+    '''plt.figure()
+    plt.imshow(image)
+    plt.show()'''
 
     # determine closed edge paths
     objNo = 0

@@ -195,60 +195,74 @@ def protPxl(pxl, max_cap):
     else:
         return pxl
 
-# determine positions of edge vectors, return (? x 2) array.
-def edgeKiller(edge_img, edge_pos, min_rad = 1):
-    # iterate through edge pixels
-    for k in range(0, edge_pos.shape[0]):
-        coord = edge_pos[k]
-        print("@",coord)
-        print("(coord[0]-8*min_rad):(coord[0]+8*min_rad+1)=", protPxl((coord[0] - 8 * min_rad - 1), edge_img.shape[0]),
-              ":", protPxl((coord[0] + 8 * min_rad + 2), edge_img.shape[0]))
-        print("(coord[1]-8*min_rad):(coord[1]+8*min_rad+1)=", protPxl((coord[1] - 8 * min_rad - 1), edge_img.shape[1]),
-              ":", protPxl((coord[1] + 8 * min_rad + 2), edge_img.shape[1]))
 
-        # loop around the neighbouring pixels (excluding the pixel itself)
-        count = 0
-        for i in range(0, 9):
-            # set increment in x, y, multiplier, and initial edge value
-            dx = i % 3 - 1
-            dy = i // 3 - 1
-            #mult = 1
-            if not i == 4:
-                # reiterate with an increasing multiplier until a non-edge pixel is found
+def edgeKill(edg_img, coord, radius = 1, task = "border-count"):
+    #print("@", coord)
+
+    # initial counter and pre-define useful values
+    count = 0
+    border_size = 2*radius + 1
+
+    # run over the square of pixels surrounding "radius"-pixels around coord
+    for i in range(0, border_size**2):
+        dx = (i % border_size) - radius
+        dy = (i // border_size) - radius
+        #print("-->(",coord[0]+dx,",",coord[1]+dy,")")
+        if task == "wipe-edges":
+            # remove all edge pixels --> change to non-edge pixels
+            edg_img[coord[0]+dx, coord[1]+dy] = 0.
+            #print("killing (",coord[0]+dx,",",coord[1]+dy,")")
+        elif task == "border-count":
+            # make sure we are looking at a border pixel
+            if( np.abs(dx)==radius or np.abs(dy)==radius ):
                 try:
-                    #while edge_img[coord[0] + mult * dx, coord[1] + mult * dy] > 0.:
-                    if edge_img[coord[0] + mult * dx, coord[1] + mult * dy] > 0.:
-                        #print("\t ...multiplying edge_value, step in same direction")
-                        #mult = mult + 1
+                    if edg_img[coord[0]+dx, coord[1]+dy] == 0.:
+                        # increment count by 1 to say we found another non-edge pixel on the border
                         count = count + 1
-                except(IndexError):
-                    #print("Edge reached perimeter of the image. No need to fill this edge.")
+                    else:
+                        # break out of the for loop if we find an edge on the border (return the original edge image)
+                        #print("Broke because border pixel has value ",edg_img[coord[0]+dx, coord[1]+dy])
+                        break
+                except (IndexError):
+                    # the central edge pixel is too close to the image perimeter
                     continue
+        else:
+            print("Task is not specified. Stopping the code...")
+            exit()
 
-        # work out if all surrounding pixels are non-edge pixels
-        exit()
+    # check if the border is all non-edge
+    if count == (2*radius)**2:
+        print("Border is all non-edge")
+        '''plt.figure()
+        plt.imshow(edg_img[protPxl((coord[0] - radius), edg_img.shape[0]):protPxl((coord[0] + radius + 1),
+                                                                                    edg_img.shape[0]),
+                   protPxl((coord[1] - radius), edg_img.shape[1]):protPxl((coord[1] + radius + 1),
+                                                                            edg_img.shape[1])])
+        plt.show()'''
+        edg_img = edgeKill(edg_img, coord, radius = (radius - 1), task = "wipe-edges")
 
-        # change edge pixel to non-edge pixel if it is not surrounded by any other edge pixels
-        #print("count=",count," min_rad=",min_rad)
-        if count < (1 + 8 * min_rad):
-            #print("\t ...removing edge pixel")
-            grph_rad = 1 + 8 * min_rad
+    return edg_img
 
-            plt.figure()
-            plt.imshow(edge_img[protPxl((coord[0] - grph_rad), edge_img.shape[0]):protPxl((coord[0] + grph_rad + 1),
-                                                                                          edge_img.shape[0]),
-                       protPxl((coord[1] - grph_rad), edge_img.shape[1]):protPxl((coord[1] + grph_rad + 1),
-                                                                                 edge_img.shape[1])])
-            plt.show()
 
-            edge_img[coord[0], coord[1]] = 0
+# determine positions of edge vectors, return (? x 2) array.
+def edgeKiller(edge_img):
+    edge_pos = edgePxlPos(edge_img)
+    # iterate through edge pixels
+    ## improve by returning coordinates to kill, instead of the whole edge image
+    for k in range(0, edge_pos.shape[0]):
+        edge_img = edgeKill(edge_img, edge_pos[k], radius = 2)
 
+    edge_pos = edgePxlPos(edge_img)
+    # iterate through edge pixels (updated edge_pos vector)
+    for k in range(0, edge_pos.shape[0]):
+        edge_img = edgeKill(edge_img, edge_pos[k], radius = 1)
     return edge_img
 
 # determine positions of edge vectors, return (? x 2) array.
 # edge_bias details how many edge pixels must be adjacent in ...
 # ... the same direction before considering it an extendable edge
-def edgeFiller(edge_img, edge_pos, edge_bias = 10):
+def edgeFiller(edge_img, edge_bias = 10):
+    edge_pos = edgePxlPos(edge_img)
     # iterate through edge pixels
     for k in range(0, edge_pos.shape[0]):
         coord = edge_pos[k]
