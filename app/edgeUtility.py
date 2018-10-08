@@ -196,7 +196,7 @@ def protPxl(pxl, max_cap):
         return pxl
 
 
-def edgeKill(edg_img, coord, radius = 1, task = "border-count"):
+def edgeKill(edg_img, coord, radius, task = "border-count"):
     #print("@", coord)
 
     # initial counter and pre-define useful values
@@ -214,7 +214,7 @@ def edgeKill(edg_img, coord, radius = 1, task = "border-count"):
             #print("killing (",coord[0]+dx,",",coord[1]+dy,")")
         elif task == "border-count":
             # make sure we are looking at a border pixel
-            if( np.abs(dx)==radius or np.abs(dy)==radius ):
+            if np.abs(dx)==radius or np.abs(dy)==radius :
                 try:
                     if edg_img[coord[0]+dx, coord[1]+dy] == 0.:
                         # increment count by 1 to say we found another non-edge pixel on the border
@@ -223,7 +223,7 @@ def edgeKill(edg_img, coord, radius = 1, task = "border-count"):
                         # break out of the for loop if we find an edge on the border (return the original edge image)
                         #print("Broke because border pixel has value ",edg_img[coord[0]+dx, coord[1]+dy])
                         break
-                except (IndexError):
+                except IndexError:
                     # the central edge pixel is too close to the image perimeter
                     continue
         else:
@@ -231,31 +231,46 @@ def edgeKill(edg_img, coord, radius = 1, task = "border-count"):
             exit()
 
     # check if the border is all non-edge
-    if count == (2*radius)**2:
+    if count == (8*radius):
         print("Border is all non-edge")
-        '''plt.figure()
-        plt.imshow(edg_img[protPxl((coord[0] - radius), edg_img.shape[0]):protPxl((coord[0] + radius + 1),
-                                                                                    edg_img.shape[0]),
-                   protPxl((coord[1] - radius), edg_img.shape[1]):protPxl((coord[1] + radius + 1),
-                                                                            edg_img.shape[1])])
-        plt.show()'''
+        '''
+        # for debug
+        if radius == 1:
+            plt.figure()
+            plt.imshow(edg_img[protPxl((coord[0] - radius), edg_img.shape[0]):protPxl((coord[0] + radius + 1),
+                                                                                      edg_img.shape[0]),
+                       protPxl((coord[1] - radius), edg_img.shape[1]):protPxl((coord[1] + radius + 1),
+                                                                              edg_img.shape[1])])
+            plt.show()
+        '''
         edg_img = edgeKill(edg_img, coord, radius = (radius - 1), task = "wipe-edges")
 
+    '''
+    # for debug
+    if task=="wipe-edges" and radius == 0:
+        print("Wiped all edges")
+        
+        plt.figure()
+        plt.imshow(edg_img[protPxl((coord[0] - radius), edg_img.shape[0]):protPxl((coord[0] + radius + 1),
+                                                                                  edg_img.shape[0]),
+                   protPxl((coord[1] - radius), edg_img.shape[1]):protPxl((coord[1] + radius + 1),
+                                                                          edg_img.shape[1])])
+        plt.show()
+    '''
     return edg_img
 
 
 # determine positions of edge vectors, return (? x 2) array.
 def edgeKiller(edge_img):
-    edge_pos = edgePxlPos(edge_img)
     # iterate through edge pixels
     ## improve by returning coordinates to kill, instead of the whole edge image
-    for k in range(0, edge_pos.shape[0]):
-        edge_img = edgeKill(edge_img, edge_pos[k], radius = 2)
-
     edge_pos = edgePxlPos(edge_img)
-    # iterate through edge pixels (updated edge_pos vector)
     for k in range(0, edge_pos.shape[0]):
         edge_img = edgeKill(edge_img, edge_pos[k], radius = 1)
+    # iterate through edge pixels (updated edge_pos vector)
+    edge_pos = edgePxlPos(edge_img)
+    for k in range(0, edge_pos.shape[0]):
+        edge_img = edgeKill(edge_img, edge_pos[k], radius = 2)
     return edge_img
 
 # determine positions of edge vectors, return (? x 2) array.
