@@ -117,7 +117,27 @@ Now that we have two arrays of the same size, we can mask the edge image on top 
 \begin{center}
 \texttt{For Python code, refer to the {\bf edgeKiller()} function in edgeUtility.py}
 \end{center}
-To accomplish this task, we first need to decide what a small scale is. This is necessary for object recognition because many complicated objects are made of smaller, perhaps even more complicated objects. Fundamentally, if an object is identified as being surrounded by a continuous border of edge pixels, then the smallest object would be three pixels in size. This because the border must be at least one pixel thick and the central pixel must not be recognised as an edge (two pixels either side of a non-edge pixel in the $x$ and $y$ direction), i.e. a square drawn around the perimeter of a $3 \times 3$ pixel grid.
+To accomplish this task, we first need to decide what a small scale is. This is necessary for object recognition because many complicated objects are made of smaller, perhaps even more complicated objects. Fundamentally, if an object is identified as being surrounded by a continuous border of edge pixels, then the smallest object would be three pixels in size. This because the border must be at least one pixel thick and the central pixel must not be recognised as an edge (two pixels either side of a non-edge pixel in the $x$ and $y$ direction), i.e. a square drawn around the perimeter of a $3 \times 3$ pixel grid. Practically, it is the choice of the user to specify a tolerance to the size of the object. Take the example of a cat. Users may want to extract certain features of the cat, depending on some objective scaling into the cat (see Table~\ref{cat_table}).
+
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+{\bf Feature/object} & {\bf User 1} & {\bf User 2} & {\bf User 3} & {\bf User 4}\\
+\hline
+{\bf Cat} & y & y & y & y\\
+\hline
+{\bf Nose} & n & y & y & y\\
+\hline
+{\bf Eye} & n & n & y & y\\
+\hline
+{\bf Iris} & n & n & n & y\\
+\hline
+\end{tabular}
+\end{center}
+\label{cat_table}
+\end{table}
+
 
 
 
