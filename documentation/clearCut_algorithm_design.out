@@ -2,6 +2,9 @@
 \BOOKMARK [2][-]{subsection.1.1}{Image size reduction}{section.1}% 2
 \BOOKMARK [1][-]{section.2}{Edge detection procedure}{}% 3
 \BOOKMARK [2][-]{subsection.2.1}{The gradient image}{section.2}% 4
-\BOOKMARK [2][-]{subsection.2.2}{Dealing with channels}{section.2}% 5
+\BOOKMARK [2][-]{subsection.2.2}{Dealing with image channels}{section.2}% 5
 \BOOKMARK [3][-]{subsubsection.2.2.1}{Obtaining gradient images}{subsection.2.2}% 6
-\BOOKMARK [3][-]{subsubsection.2.2.2}{Returning detected edges in original image size}{subsection.2.2}% 7
+\BOOKMARK [3][-]{subsubsection.2.2.2}{Returning detected edges in reduced image size}{subsection.2.2}% 7
+\BOOKMARK [2][-]{subsection.2.3}{Cleaning the edge data}{section.2}% 8
+\BOOKMARK [3][-]{subsubsection.2.3.1}{Removing small scale edge data}{subsection.2.3}% 9
+\BOOKMARK [3][-]{subsubsection.2.3.2}{Expand large-length edge data}{subsection.2.3}% 10

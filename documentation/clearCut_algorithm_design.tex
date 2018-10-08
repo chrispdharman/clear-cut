@@ -81,7 +81,7 @@ The mathematical quantity we are interested in is the difference in value betwee
 
 Thus for a generic pixel at $(i,j)$, the difference in value between pixels $(i-1,j-1)$, $(i+1,j)$, $(i,j+1)$, and $(i+1,j+1)$ is calculated. These four directions are a choice and are not expected to make a difference in the final result. Note that not all gradients can be calculated if the pixel under consideration sits along the perimeter of the image. That each pixel in the ``image space'' has four unique gradients calculated, means that we will obtain a ``gradient space'' of size $2M_{\text{eff}} \times 2N_{\text{eff}}$.
 
-\subsection{Dealing with channels}
+\subsection{Dealing with image channels}
 \subsubsection{Obtaining gradient images}
 \begin{center}
 \texttt{For Python code, refer to the {\bf traceObjectsInImage()} function in edgeUtility.py}
@@ -92,19 +92,39 @@ Each of the RGB channels have the edge detection algorithm specified in Section~
   \item the Green channel gradient array exists in the domain $(2M_{\text{eff}},~4M_{\text{eff}}-1)$, and
   \item the Blue channel gradient array exists in the domain $(4M_{\text{eff}},~6M_{\text{eff}}-1)$.
 \end{itemize}
-Recall that we could only reduce the number of gradients per pixel if we ignore the gradients sign. Therefore, we must take care to only add up the gradient images element-wise AFTER taking the magnitude of each element first. The initial step in edge detection is to determine whether an (rgb) pixel in the original image is, or is not, part of an edge; this turns each pixel into a ``yes'' or ``no'' (boolean) answer. We therefore set a numerical upper and lower limit on what is an edge pixel, and what is not. We implement this through a variable parameter called \texttt{imCut}, whereby an edge pixel is one in which the gradient lives between:
+Recall that we could only reduce the number of gradients per pixel if we ignore the gradients sign. Therefore, we must take care to only add up the gradient images element-wise AFTER taking the magnitude of each element first. The initial step in edge detection is to determine whether an (rgb) pixel in the reduced image is, or is not, part of an edge; this turns each pixel into a ``yes'' or ``no'' (boolean) answer. We therefore set a numerical upper and lower limit on what is an edge pixel, and what is not. We implement this through a variable parameter called \texttt{imCut}, whereby an edge pixel is one in which the gradient lives between:
 \begin{equation}
 255\times \texttt{imCut}< \text{Gradient}_{\text{edge pixel}} < 255\times (1-\texttt{imCut})\text{.}
 \end{equation}
 We have found $\texttt{imCut} = 0.07 \pm 0.02$ to work effectively. We have found both the upper limit and lower limit are necessary to extract clear edge pixels for any image. The lower limit is understandable because it determines adjacent pixels with too similar a colour as not being an edge pixel, however, the upper limit is less trivial. We believe the upper limit is necessary to remove random fluctuations in light/darkness within an image. These may be the result of tiny defective regions of photographical film that cannot be seen by the human eye when the image view at a larger scale that the size of the defect.
 
-\subsubsection{Returning detected edges in original image size}
+\subsubsection{Returning detected edges in reduced image size}
 \begin{center}
 \texttt{For Python code, refer to the {\bf mergeChannelsTracedImage()} function in edgeUtility.py}
 \end{center}
-We now have three gradient space arrays. However, we only want one gradient space array to say whether a single (rgb) pixel in the original image is an edge or not. This means we that we need to merge each of the gradient arrays into a single gradient array, and then reduce this gradient array to be the same size as the original image. The idea behind the merge is that \textbf{the more channels that detect an edge, the more likely it is to be an edge}. This is in agreement with human perception that an orange boat on a blue sea is far more distinct object than a blue boat on a blue sea. We therefore simply add up each gradient image element-wise to form our final gradient image.
+We now have three gradient space arrays. However, we only want one gradient space array to say whether a single (rgb) pixel in the reduced image is an edge or not. This means we that we need to merge each of the gradient arrays into a single gradient array, and then reduce this gradient array to be the same size as the reduced image. The idea behind the merge is that \textbf{the more channels that detect an edge, the more likely it is to be an edge}. This is in agreement with human perception that an orange boat on a blue sea is far more distinct object than a blue boat on a blue sea. We therefore simply add up each gradient image element-wise to form our final gradient image.
 
-This final gradient image is still roughly double the width and double the height of the original image. We reduce the gradient image to the same size as the original image using max pooling of $2 \times 2$-sized kernels. Therefore the ``edgeness value'' of each (rgb) pixel of the original image is determined by the 
+This final gradient image is still roughly double the width and double the height of the reduced image. We reduce the gradient image to the same size as the reduced image using max pooling of $(2 \times 2)$-sized kernels. Therefore the final ``edge value'' of each (rgb) pixel of the reduced image is determined by the largest gradient of that pixel and its neighbouring pixel. This in turn determines whether it is an edge pixel or not.
+
+\subsection{Cleaning the edge data}
+Now that we have two arrays of the same size, we can mask the edge image on top of the reduced image to view our current results. In doing so for a number of unique images, we observe  two main features:
+\begin{enumerate}
+  \item There exist spurious regions of edge pixels with a size of the order of a few pixels. \textbf{Solution: remove tiny regions of edge data.}
+  \item There are edge pixels around the perimeter of objects in the reduced image, but with the occasional break, whereby no edge pixels exist. \textbf{Solution: extrapolate long regions of edge data.}
+\end{enumerate}
+
+\subsubsection{Removing small scale edge data}
+\begin{center}
+\texttt{For Python code, refer to the {\bf edgeKiller()} function in edgeUtility.py}
+\end{center}
+To accomplish this task, we first need to decide what a small scale is. This is necessary for object recognition because many complicated objects are made of smaller, perhaps even more complicated objects. Fundamentally, if an object is identified as being surrounded by a continuous border of edge pixels, then the smallest object would be three pixels in size. This because the border must be at least one pixel thick and the central pixel must not be recognised as an edge (two pixels either side of a non-edge pixel in the $x$ and $y$ direction), i.e. a square drawn around the perimeter of a $3 \times 3$ pixel grid.
+
+
+
+\subsubsection{Expand large-length edge data}
+\begin{center}
+\texttt{For Python code, refer to the {\bf edgeFiller()} function in edgeUtility.py}
+\end{center}
 
 
 
