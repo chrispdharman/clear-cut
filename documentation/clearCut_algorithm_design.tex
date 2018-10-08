@@ -138,13 +138,15 @@ To accomplish this task, we first need to decide what a small scale is. This is 
 \label{cat_table}
 \end{table}
 
+To this end, a user may specific their pixel tolerance using the parameter \texttt{objectTolerance}. Any edge pixels that are found within a border of size $(2\times \texttt{objectTolerance}+1) \times (2\times \texttt{objectTolerance}+1)$, where the border does not contain any edge pixels, are killed off.
 
-
+% include visualisations here
 
 \subsubsection{Expand large-length edge data}
 \begin{center}
 \texttt{For Python code, refer to the {\bf edgeFiller()} function in edgeUtility.py}
 \end{center}
+To address the issue of small gaps within edges, we extrapolate any edges subject to number of consecutive edge pixels in a given direction. The minimum number of consecutive edge pixels required for the extrapolation to happen is embodied in the parameter \texttt{edge_bias}. The extrapolation basically runs through each edge pixels and determines the number of consecutive edge pixels in each of the eight directions $(-1,-1)$, $(-1,0)$, $(-1,+1)$, $(0,-1)$, $(0,+1)$, $(+1,-1)$, $(+1,0)$, and $(+1,+1)$. If the number of edge pixels in a direction is greater than \texttt{edge_bias}, change the first non-edge pixel in that direction to an edge pixel.
 
 
 

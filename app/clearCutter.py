@@ -93,7 +93,7 @@ def main():
     edgy_images = edgeKiller(edgy_images, objectTolerance = 4)
 
     # use direction bias to fill in between edge pixels (possible edges)
-    edgy_images = edgeFiller(edgy_images)
+    edgy_images = edgeFiller(edgy_images, edge_bias = 10)
     plt.figure()
     plt.imshow(edgy_images > 0.)
     plt.show()
