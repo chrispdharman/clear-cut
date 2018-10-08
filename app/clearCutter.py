@@ -90,7 +90,7 @@ def main():
     edgy_images = traceObjectsInImage(image) # later think about implementing different methods as an argument
 
     # remove edge pixels that cannot possibly contain an edge (may need to change order with edgeFiller?)
-    edgy_images = edgeKiller(edgy_images)
+    edgy_images = edgeKiller(edgy_images, objectTolerance = 4)
 
     # use direction bias to fill in between edge pixels (possible edges)
     edgy_images = edgeFiller(edgy_images)

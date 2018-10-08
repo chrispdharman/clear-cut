@@ -63,14 +63,11 @@ def traceObjectsInImage(origImage):
     #plt.figure()
     #plt.imshow(mrgIm1)
 
-    mrgIm2 = mergeChannelsTracedImage(
+    edge_array = mergeChannelsTracedImage(
         np.multiply((np.absolute(gradImage.T) < (1 - imCut) * 255), (np.absolute(gradImage.T) > imCut * 255)),
         origImage.shape)
     #plt.figure()
     #plt.imshow(mrgIm2)
-
-    # reduce gradient array to original image shape. Max pool gradient array using 2x2 kernel
-    edge_array = block_reduce(mrgIm2, (2, 2), np.max)
 
     # append 0s (non-edge pixels) to any missing columns/rows
     x_miss = origImage.shape[0] - edge_array.shape[0]
@@ -117,7 +114,8 @@ def mergeChannelsTracedImage(grdImg, origShape):
             #print("i=", i, ", j=", j)
             mrgdImg[i,j] = (grdImg[i,j] + grdImg[i,j+ x_offset] + grdImg[i,j + 2*x_offset])/3
 
-    return mrgdImg
+    # reduce gradient array to original image shape. Max pool gradient array using 2x2 kernel
+    return block_reduce(mrgdImg, (2, 2), np.max)
 
 # def rotate image 90 deg CW shortcut
 def rotIm(img):
@@ -232,7 +230,7 @@ def edgeKill(edg_img, coord, radius, task = "border-count"):
 
     # check if the border is all non-edge
     if count == (8*radius):
-        print("Border is all non-edge")
+        #print("Border is all non-edge")
         '''
         # for debug
         if radius == 1:
@@ -261,16 +259,14 @@ def edgeKill(edg_img, coord, radius, task = "border-count"):
 
 
 # determine positions of edge vectors, return (? x 2) array.
-def edgeKiller(edge_img):
-    # iterate through edge pixels
-    ## improve by returning coordinates to kill, instead of the whole edge image
-    edge_pos = edgePxlPos(edge_img)
-    for k in range(0, edge_pos.shape[0]):
-        edge_img = edgeKill(edge_img, edge_pos[k], radius = 1)
-    # iterate through edge pixels (updated edge_pos vector)
-    edge_pos = edgePxlPos(edge_img)
-    for k in range(0, edge_pos.shape[0]):
-        edge_img = edgeKill(edge_img, edge_pos[k], radius = 2)
+def edgeKiller(edge_img, objectTolerance = 1):
+    # iterate through pixels distance from chosen edge pixel, going up to the specified objectTolerance value
+    for r in range(1, objectTolerance):
+        ## improve by returning coordinates to kill, instead of the whole edge image
+        # iterate through edge pixels (updated edge_pos vector)
+        edge_pos = edgePxlPos(edge_img)
+        for k in range(0, edge_pos.shape[0]):
+            edge_img = edgeKill(edge_img, edge_pos[k], radius = r)
     return edge_img
 
 # determine positions of edge vectors, return (? x 2) array.
@@ -312,7 +308,7 @@ def randomPathEdgeRace(img, edgy_img):
     # pick random edge pixel to start from
     initEdgePxl = posList[randint(0,posList.shape[0])]
     pxl_lst = [0, 0, 0, 0]
-    print("Initial edge pixel=",initEdgePxl,"--> Value of ", edgy_img[initEdgePxl[0],initEdgePxl[1]])
+    #print("Initial edge pixel=",initEdgePxl,"--> Value of ", edgy_img[initEdgePxl[0],initEdgePxl[1]])
 
     # determine the pixels around this initial pixel in each direction
     horizontal_lst = pxlLen(edgy_img, initEdgePxl, [0, 1],

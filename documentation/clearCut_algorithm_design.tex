@@ -67,37 +67,45 @@ As it currently exists, the process consists of determining the smallest number 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Edge detection procedure}
-\subsection{The gradient image}
+\subsection{\label{sec:grad_img}The gradient image}
+\begin{center}
+\texttt{For Python code, refer to the {\bf traceObjectsInImage()} function in edgeUtility.py}
+\end{center}
 In order to determine the edges of an image, we must choose a criteria to distinguishing a single pixel located at $(i_0,j_0)$ as being part of ``an edge''. We would refer to such pixels as ``edge pixels'' or ``non-edge pixels'' in future. This is achieved by mathematically comparing its value to those of its surrounding pixels. The simplest method to adopt is to consider only the pixels neighbouring pixels $(i,j)$, i.e. any combination of pixels that satisfy
 \begin{equation}
 i_0-1 \leq i \leq i_0+1\text{, and }j_0-1 \leq j \leq j_0+1\text{.}
 \end{equation}
 A more advanced technique could extend the range of neighbouring pixels. For a pixel not located on the perimeter of the image, it would have 8 neighbouring pixels.
 
-The mathematical quantity we are interested in is the difference in value between the pixels and it's neighbouring pixels. It is then believe that a (sharp) edge pixel would be identified as having a large difference in value between any neighbouring pixel and itself. With 8 neighbouring pixels, we would have to calculate 8 gradients per pixel. It turns out that we can more efficient in calculating the gradients and only count 4 instead. This is because when the neighbouring pixel has the gradient calculated, it would be the same (bar a sign change). This means that we are double-counting the gradients; therefore we need only calculate 4 gradients. For a generic pixel at $(i,j)$, the difference is value between pixels $(i-1,j-1)$, $(i+1,j)$, $(i,j+1)$, and $(i+1,j+1)$ is calculated. Not that not all gradients can be calculated if the pixel under consideration is along the perimeter of the image. See image for visual aid.
+The mathematical quantity we are interested in is the difference in value between a selected pixel and it's neighbouring pixels. For the simple case, an edge pixel would be identified as having a large difference in value between any adjacent neighbouring pixel and itself. This simplest case works well for an image with sharp edges, but not so well for an image with blurry edges. With eight neighbouring pixels, we would have to calculate eight gradients per pixel. It turns out that we can more efficient in calculating the gradients and only count four instead. This is because when the neighbouring pixel has the gradient calculated, it would be the same magnitude but a different sign. The sign is irrelevant for determining the ``sharpness'' between pixels. This means that the eight gradient per pixel method would double-count the number of gradients; therefore we need only calculate four gradients per pixel instead.
+
+Thus for a generic pixel at $(i,j)$, the difference in value between pixels $(i-1,j-1)$, $(i+1,j)$, $(i,j+1)$, and $(i+1,j+1)$ is calculated. These four directions are a choice and are not expected to make a difference in the final result. Note that not all gradients can be calculated if the pixel under consideration sits along the perimeter of the image. That each pixel in the ``image space'' has four unique gradients calculated, means that we will obtain a ``gradient space'' of size $2M_{\text{eff}} \times 2N_{\text{eff}}$.
 
 \subsection{Dealing with channels}
-Each of the RGB channels have the edge detection algorithm applied to them. \\
-
-
-
-\begin{table}[h]
+\subsubsection{Obtaining gradient images}
 \begin{center}
-\begin{tabular}{|c|l|}
-\hline
-{\bf DevOps} & Best practices and administration of the Atlassian Suite, e.g. Jira, Confluence\\
-\hline
-{\bf Non-functional Testing} & Performance testing of a variety of applications (e.g. HPE LoadRunner, JMeter)\\
-\hline
-{\bf Automation/Scripting} & Developed two software solutions using Java SE 8 and Excel's VBA macro\\
-\hline
-{\bf API Programming} & Utilising RESTful services from online documentation within scripts\\
-\hline
-{\bf Deep Learning} & Using Google's TensorFlow framework (python) for predictive analytics\\
-\hline
-\end{tabular}
+\texttt{For Python code, refer to the {\bf traceObjectsInImage()} function in edgeUtility.py}
 \end{center}
-\label{default}
-\end{table}
+Each of the RGB channels have the edge detection algorithm specified in Section~\ref{sec:grad_img} applied to them. This is achieved by writing out the results to a single array of size $6M_{\text{eff}} \times 2N_{\text{eff}}$, where each channel's gradient image is offset as follows:
+\begin{itemize}
+  \item the Red channel gradient array exists in the domain $(0,~2M_{\text{eff}}-1)$,
+  \item the Green channel gradient array exists in the domain $(2M_{\text{eff}},~4M_{\text{eff}}-1)$, and
+  \item the Blue channel gradient array exists in the domain $(4M_{\text{eff}},~6M_{\text{eff}}-1)$.
+\end{itemize}
+Recall that we could only reduce the number of gradients per pixel if we ignore the gradients sign. Therefore, we must take care to only add up the gradient images element-wise AFTER taking the magnitude of each element first. The initial step in edge detection is to determine whether an (rgb) pixel in the original image is, or is not, part of an edge; this turns each pixel into a ``yes'' or ``no'' (boolean) answer. We therefore set a numerical upper and lower limit on what is an edge pixel, and what is not. We implement this through a variable parameter called \texttt{imCut}, whereby an edge pixel is one in which the gradient lives between:
+\begin{equation}
+255\times \texttt{imCut}< \text{Gradient}_{\text{edge pixel}} < 255\times (1-\texttt{imCut})\text{.}
+\end{equation}
+We have found $\texttt{imCut} = 0.07 \pm 0.02$ to work effectively. We have found both the upper limit and lower limit are necessary to extract clear edge pixels for any image. The lower limit is understandable because it determines adjacent pixels with too similar a colour as not being an edge pixel, however, the upper limit is less trivial. We believe the upper limit is necessary to remove random fluctuations in light/darkness within an image. These may be the result of tiny defective regions of photographical film that cannot be seen by the human eye when the image view at a larger scale that the size of the defect.
+
+\subsubsection{Returning detected edges in original image size}
+\begin{center}
+\texttt{For Python code, refer to the {\bf mergeChannelsTracedImage()} function in edgeUtility.py}
+\end{center}
+We now have three gradient space arrays. However, we only want one gradient space array to say whether a single (rgb) pixel in the original image is an edge or not. This means we that we need to merge each of the gradient arrays into a single gradient array, and then reduce this gradient array to be the same size as the original image. The idea behind the merge is that \textbf{the more channels that detect an edge, the more likely it is to be an edge}. This is in agreement with human perception that an orange boat on a blue sea is far more distinct object than a blue boat on a blue sea. We therefore simply add up each gradient image element-wise to form our final gradient image.
+
+This final gradient image is still roughly double the width and double the height of the original image. We reduce the gradient image to the same size as the original image using max pooling of $2 \times 2$-sized kernels. Therefore the ``edgeness value'' of each (rgb) pixel of the original image is determined by the 
+
+
 
 \end{document}
