@@ -146,7 +146,46 @@ To this end, a user may specific their pixel tolerance using the parameter \text
 \begin{center}
 \texttt{For Python code, refer to the {\bf edgeFiller()} function in edgeUtility.py}
 \end{center}
-To address the issue of small gaps within edges, we extrapolate any edges subject to number of consecutive edge pixels in a given direction. The minimum number of consecutive edge pixels required for the extrapolation to happen is embodied in the parameter \texttt{edge_bias}. The extrapolation basically runs through each edge pixels and determines the number of consecutive edge pixels in each of the eight directions $(-1,-1)$, $(-1,0)$, $(-1,+1)$, $(0,-1)$, $(0,+1)$, $(+1,-1)$, $(+1,0)$, and $(+1,+1)$. If the number of edge pixels in a direction is greater than \texttt{edge_bias}, change the first non-edge pixel in that direction to an edge pixel.
+To address the issue of small gaps within edges, we extrapolate any edges subject to number of consecutive edge pixels in a given direction. The minimum number of consecutive edge pixels required for the extrapolation to happen is embodied in the parameter \texttt{edge\_bias}. The extrapolation basically runs through each edge pixels and determines the number of consecutive edge pixels in each of the eight directions $(-1,-1)$, $(-1,0)$,$(-1,+1)$, $(0,-1)$, $(0,+1)$, $(+1,-1)$, $(+1,0)$,and $(+1,+1)$. If the number of edge pixels in a direction is greater than $\texttt{edge\_bias}$, change the first non-edge pixel in that direction to an edge pixel.
+
+% include visualisations here
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%% OBJECT EXTRACTION PROCEDURE %%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Object extraction procedure}
+\subsection{Theoretical set up}
+Randomly pick an initial edge pixel. Determine the directions in which the neighbouring pixel is also an edge pixel. For the directions which have an edge pixel, (recursively) determine if the pixel in that same direction is also an edge pixel until it is not an edge pixel. Note down the number of edge pixels in this direction and add it to the number of edge pixels (until a non-edge pixel is found) in the exact opposite direction. This will result in four lengths - which we will call \textit{thicknesses} - in each of the directions:
+\begin{itemize}
+  \item horizontal: $(-1,0)\rightarrow (+1,0)$,
+  \item vertical: $(0,-1)\rightarrow (0,+1)$, 
+  \item positive gradient diagonal: $(-1,-1)\rightarrow (+1,+1)$, 
+  \item negative gradient diagonal: $(-1,+1)\rightarrow (+1,-1)$.
+\end{itemize}
+
+The shortest thickness of consecutive edge pixels at the initial edge pixel will be referred to as the \textbf{race start line}. The length of the race start line is defined to be in the $\hat{y}$-direction of the Cartesian coordinate system $\hat{C}: (\hat{x},\hat{y})$. The initial direction of the \textbf{race path} must have a non-zero $\hat{x}$-component, i.e. the initial path vector is $\vec{O}=a\hat{x}+b\hat{y}$, where $a \neq 0$.
+
+\subsection{Definition of an object}
+\begin{center}
+\texttt{We define an object within an image as the set of pixels that residue\\ within an enclosed path of edge pixels. The enclosed path must return\\ through the race start line with an $\hat{\texttt{x}}$-component that has the same sign\\ as that in
+	 which the path was initialised.}
+\end{center}
+There are two very important concepts to understand within this definition:
+\begin{itemize}
+  \item \textit{... an enclosed path ...}: this means we should be able to draw a continuous path of edge pixels that start and end at the same edge pixel coordinate.
+  \item \textit{... $\hat{x}$-component that has the same sign ...}: this means that the path of edge pixels must have an initial path vector with an $\hat{x}$-component with the same sign as the $\hat{x}$-component of the (final) path vector that crosses past the start race line. Since the path is determined by when the path has crossed the start race line, it means the path could not have gone back on itself whereby it remains along the ``same edge''. % Need to include visualisations here of starting at the bottom of a hangmans knot, and starting at the top of the knot.
+\end{itemize}
+
+\subsection{Stepping into the edge path}
+The edge path cannot be stepped by an entirely random process as the code would take too long to run and possible return nonsense (see Brownian motion). However, neither can the steps be too systematic as this may guarantee that some forks in the edges are never taken, thus losing potential objects. At each step, there must be some notion of moving in a direction roughly orthogonal to the shortest pixel thickness that is also away from pixel at the previous step. Therefore, the step is chosen to be close to the vector orthogonal to the start line for that current pixel, but with a small random fluctuation in the ($\hat{y}$-)direction of the start line.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=15.0cm]{visuals/edge_id_aids/Path_algorithm.png}
+\caption{\small{Visualisation of the random path method. This image shows two paths starting at the same initial edge pixel (white square) with the same steps up $i=3$. At this point the path the random vector off the $i=3$ start line may either go into the upper or lower fork of the edge. The green cone has been drawn to detail that the random path vector has a specified length (the radius of the cone) but the random direction is constrained to within the green cone.}}
+\label{singleField_PtPlot_fig}
+\end{figure}
 
 
 

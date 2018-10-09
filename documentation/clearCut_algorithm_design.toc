@@ -8,3 +8,7 @@
 \contentsline {subsection}{\numberline {2.3}Cleaning the edge data}{4}{subsection.2.3}
 \contentsline {subsubsection}{\numberline {2.3.1}Removing small scale edge data}{4}{subsubsection.2.3.1}
 \contentsline {subsubsection}{\numberline {2.3.2}Expand large-length edge data}{4}{subsubsection.2.3.2}
+\contentsline {section}{\numberline {3}Object extraction procedure}{5}{section.3}
+\contentsline {subsection}{\numberline {3.1}Theoretical set up}{5}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}Definition of an object}{5}{subsection.3.2}
+\contentsline {subsection}{\numberline {3.3}Stepping into the edge path}{6}{subsection.3.3}

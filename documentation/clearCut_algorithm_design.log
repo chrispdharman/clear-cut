@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.10.19)  8 OCT 2018 17:05
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.10.19)  9 OCT 2018 17:15
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -347,27 +347,33 @@ File: omscmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10.95> not available
 (Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 91.
- [3]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 150.
- [4]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 150.
+ [3] [4] [5]
+<visuals/edge_id_aids/Path_algorithm.png, id=116, 803.0pt x 301.125pt>
+File: visuals/edge_id_aids/Path_algorithm.png Graphic file (type png)
 
-(./clearCut_algorithm_design.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 150.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 150.
+<use visuals/edge_id_aids/Path_algorithm.png>
+Package pdftex.def Info: visuals/edge_id_aids/Path_algorithm.png used on input 
+line 185.
+(pdftex.def)             Requested size: 426.79134pt x 160.05037pt.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 191.
+ [6 <./visuals/edge_id_aids/Path_algorithm.png>]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 191.
+ (./clearCut_algorithm_design.aux)
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 191.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 191.
 Package rerunfilecheck Info: File `clearCut_algorithm_design.out' has not chang
 ed.
-(rerunfilecheck)             Checksum: 64E3C5E1BB46DA7F386AAFCB64F76345;754.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 150.
+(rerunfilecheck)             Checksum: EAFB376C86D5750BB642C17790765BF5;1035.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 191.
  ) 
 Here is how much of TeX's memory you used:
- 6192 strings out of 493089
- 91536 string characters out of 6134841
- 183468 words of memory out of 5000000
- 9589 multiletter control sequences out of 15000+600000
- 10903 words of font info for 40 fonts, out of 8000000 for 9000
+ 6218 strings out of 493089
+ 91995 string characters out of 6134841
+ 183949 words of memory out of 5000000
+ 9604 multiletter control sequences out of 15000+600000
+ 11703 words of font info for 43 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 29i,8n,28p,960b,326s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 29i,8n,28p,1035b,326s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
 ></usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb>
 </usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><
@@ -377,11 +383,12 @@ sr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr
 ocal/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/loc
 al/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/
 texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/t
-exlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on clearCut_algorithm_design.pdf (4 pages, 131286 bytes).
+exlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/te
+xlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
+Output written on clearCut_algorithm_design.pdf (6 pages, 163730 bytes).
 PDF statistics:
- 131 PDF objects out of 1000 (max. 8388607)
- 113 compressed objects within 2 object streams
- 21 named destinations out of 1000 (max. 500000)
- 81 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 168 PDF objects out of 1000 (max. 8388607)
+ 145 compressed objects within 2 object streams
+ 28 named destinations out of 1000 (max. 500000)
+ 118 words of extra memory for PDF output out of 10000 (max. 10000000)
 
