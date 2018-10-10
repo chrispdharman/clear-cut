@@ -365,7 +365,9 @@ def random_step_direction(edgy_img, new_pxl, start_line, step_dist = 1):
             new_y, new_x = new_pxl + np.multiply(i, path_vec)
             print("new_y=",new_y,", new_x=",new_x)
             print("--- value of next pxl=", edgy_img[new_y, new_x])
-            all_edge = all_edge or (edgy_img[new_y, new_x] > 0.)
+            all_edge = (edgy_img[new_y, new_x] > 0.)
+            if not all_edge:
+                break
 
     print("Broken out of while loop")
 
