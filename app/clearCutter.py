@@ -94,9 +94,9 @@ def main():
 
     # use direction bias to fill in between edge pixels (possible edges)
     edgy_images = edgeFiller(edgy_images, edge_bias = 10)
-    plt.figure()
-    plt.imshow(edgy_images > 0.)
-    plt.show()
+    #plt.figure()
+    #plt.imshow(edgy_images > 0.)
+    #plt.show()
 
     # mask original image with edge array (original edges are red, filled edge are blue)
     #image[:, :, 2][new_edgy_images > 0.3] = 255
