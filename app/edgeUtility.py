@@ -334,19 +334,24 @@ def random_step_direction(edgy_img, new_pxl, start_line, prev_path_vec, step_dis
         # save the original pixel
         print("@",new_pxl)
 
-    # using the start line coordinates, determine the vector in which the start line points
-    if len(start_line) == 1:
-        # determine the axis in which two non-edge pixels are either side of new_pxl
-        if edgy_img[new_pxl[0]-1,new_pxl[1]] == 0. and edgy_img[new_pxl[0]+1,new_pxl[1]] == 0.:
-            start_vec = [1, 0]
-        elif edgy_img[new_pxl[0]-1,new_pxl[1]-1] == 0. and edgy_img[new_pxl[0]+1,new_pxl[1]+1] == 0.:
-            start_vec = [1, 1]
-        elif edgy_img[new_pxl[0]-1,new_pxl[1]+1] == 0. and edgy_img[new_pxl[0]+1,new_pxl[1]-1] == 0.:
-            start_vec = [1, -1]
+    try:
+        # using the start line coordinates, determine the vector in which the start line points
+        if len(start_line) == 1:
+            # determine the axis in which two non-edge pixels are either side of new_pxl
+            if edgy_img[new_pxl[0]-1,new_pxl[1]] == 0. and edgy_img[new_pxl[0]+1,new_pxl[1]] == 0.:
+                start_vec = [1, 0]
+            elif edgy_img[new_pxl[0]-1,new_pxl[1]-1] == 0. and edgy_img[new_pxl[0]+1,new_pxl[1]+1] == 0.:
+                start_vec = [1, 1]
+            elif edgy_img[new_pxl[0]-1,new_pxl[1]+1] == 0. and edgy_img[new_pxl[0]+1,new_pxl[1]-1] == 0.:
+                start_vec = [1, -1]
+            else:
+                start_vec = [0, 1]
         else:
-            start_vec = [0, 1]
-    else:
-        start_vec = np.sign([start_line[0][0]-start_line[-1][0], start_line[0][1]-start_line[-1][1]])
+            start_vec = np.sign([start_line[0][0]-start_line[-1][0], start_line[0][1]-start_line[-1][1]])
+    except IndexError:
+        print("Exceeded image perimeter. This special case has yet to be accounted for")
+        return []
+
     if debug:
         print("1. start_vec=", start_vec)
 
@@ -385,8 +390,12 @@ def random_step_direction(edgy_img, new_pxl, start_line, prev_path_vec, step_dis
                 #print("-vec_list[k] =", vec_list[k], " has dot prod=",unit_vec_dot(prev_path_vec, pos_path_vec), " and adjacent edge=",edgy_img[new_pxl[0]+pos_path_vec[0],new_pxl[1]+pos_path_vec[1]])
                 if not (prev_path_vec[0] == 0 and prev_path_vec[1] == 0):
                     # print("-/-dot product =", unit_vec_dot(prev_path_vec, pos_path_vec))
-                    if unit_vec_dot(prev_path_vec, pos_path_vec) <= 0. or edgy_img[new_pxl[0]+pos_path_vec[0],new_pxl[1]+pos_path_vec[1]]==0:
-                        bad_vecs.append(vec_list[k])
+                    try:
+                        if unit_vec_dot(prev_path_vec, pos_path_vec) <= 0. or edgy_img[new_pxl[0]+pos_path_vec[0],new_pxl[1]+pos_path_vec[1]]==0:
+                            bad_vecs.append(vec_list[k])
+                    except IndexError:
+                        print("Exceeded image perimeter. This special case has yet to be accounted for")
+                        return []
             for k in range(0, len(bad_vecs)):
                 vec_list.remove(bad_vecs[k])
             #print("Only ", len(vec_list), " vectors survived")
@@ -478,7 +487,7 @@ def randomPathEdgeRace(img, edgy_img):
 
         if len(step_path) < 1:
             # break random path as no path can be found
-            #print("No path found")
+            #print("No path found or image perimeter detected")
             break
         else:
             new_pxl = step_path[-1]
@@ -558,14 +567,16 @@ def pxlLen(edgy_img, init_pxl, pxl_dir, edge):
     dx_0, dy_0 = pxl_dir
 
     #print("Ingoing edge: ", edge)
-
-    # store pixel positions in a list
-    while edgy_img[init_x + dx, init_y + dy] > 0.:
-        edge = np.append(edge, np.array([[init_x + dx, init_y + dy]]), axis = 0)
-        # increment value of edge length by 1
-        dx = dx + dx_0
-        dy = dy + dy_0
-        #print("@(",init_x + dx,",",init_y + dy,")=",edgy_img[init_x + dx, init_y + dy])
+    try:
+        # store pixel positions in a list
+        while edgy_img[init_x + dx, init_y + dy] > 0.:
+            edge = np.append(edge, np.array([[init_x + dx, init_y + dy]]), axis = 0)
+            # increment value of edge length by 1
+            dx = dx + dx_0
+            dy = dy + dy_0
+            #print("@(",init_x + dx,",",init_y + dy,")=",edgy_img[init_x + dx, init_y + dy])
+    except IndexError:
+        print("Exceeded image perimeter. This special case has yet to be accounted for")
 
     #print("Outgoing edge: ", edge)
     return edge

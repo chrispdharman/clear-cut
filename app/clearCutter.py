@@ -108,7 +108,7 @@ def main():
 
     # determine closed edge paths
     objNo = 0
-    while objNo < 3:
+    while objNo < 10:
         # run one iteration of random path edge race
         objBool, objEdgeArray = randomPathEdgeRace(image, edgy_images)
 
