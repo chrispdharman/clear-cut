@@ -424,7 +424,7 @@ def random_step_direction(edgy_img, new_pxl, start_line, prev_path_vec, step_dis
         else:
             print("No plausible direction")
 
-    #print("step_path=",step_path)
+    print("\t \t \t \t \t 5. step_path=",step_path)
 
     return step_path
 
@@ -434,7 +434,7 @@ def randomPathEdgeRace(img, edgy_img):
 
     # pick random edge pixel to start from
     initEdgePxl = posList[randint(0,posList.shape[0])]
-    initEdgePxl = [56, 150]
+    #initEdgePxl = [56, 150]
     pxl_lst, pxl_radii = pxlThickness(edgy_img, initEdgePxl)
     init_start_line = (pxl_lst[np.argmin(pxl_radii)])
     #print("Start line shape = ", start_line.shape)
@@ -443,12 +443,12 @@ def randomPathEdgeRace(img, edgy_img):
     for i in range(0, len(init_start_line)):
         edgy_img[init_start_line[i,0], init_start_line[i,1]] = 2.0
     edgy_img[initEdgePxl[0],initEdgePxl[1]]= 2.5
-    plt.figure()
-    plt.imshow(edgy_img)
+    #plt.figure()
+    #plt.imshow(edgy_img)
     init_rad = np.max(pxl_radii)
-    plt.figure()
-    plt.imshow(edgy_img[(initEdgePxl[0] - init_rad - 1):(initEdgePxl[0] + init_rad + 1),
-               (initEdgePxl[1] - init_rad -1):(initEdgePxl[1] + init_rad + 1)])
+    #plt.figure()
+    #plt.imshow(edgy_img[(initEdgePxl[0] - init_rad - 1):(initEdgePxl[0] + init_rad + 1),
+    #           (initEdgePxl[1] - init_rad -1):(initEdgePxl[1] + init_rad + 1)])
     #plt.show()
 
     # pick (but remember) a direction orthogonal to the smallest thickness to tend the path toward)
@@ -456,14 +456,15 @@ def randomPathEdgeRace(img, edgy_img):
     step = 0
     new_pxl = initEdgePxl
     path_vec = [0, 0]
-    while (not crossed_start_line) and (step < 500):
+    #while (not crossed_start_line) and (step < 5000):
+    while (not crossed_start_line):
         # update start_line from previous pxl_radii data
         start_line = (pxl_lst[np.argmin(pxl_radii)])
         prev_pxl = new_pxl
         #print("start_line=",start_line)
 
         # pick a semi-random direction, roughly orthogonal to the start line and return the path
-        step_path = random_step_direction(edgy_img, new_pxl, start_line, path_vec, step_dist = len(start_line))
+        step_path = random_step_direction(edgy_img, new_pxl, start_line, path_vec, step_dist = len(start_line)+1)
         #print("step_path: ", step_path)
 
         if len(step_path) < 1:
@@ -490,7 +491,9 @@ def randomPathEdgeRace(img, edgy_img):
         # update start line and new pxl starting point
         start_line = (pxl_lst[np.argmin(pxl_radii)])
         # take the new pixel as the midpoint of the start line
-        new_pxl = start_line[len(start_line) // 2 - 1]
+        #new_pxl = start_line[len(start_line) // 2 - 1]
+        # take the new pixel as the final point of the last path
+        new_pxl = step_path[-1]
 
         #print("start_line=",start_line)
         #print("new_pxl=", new_pxl)
@@ -500,7 +503,7 @@ def randomPathEdgeRace(img, edgy_img):
             edgy_img[step_path[i][0], step_path[i][1]] = 1.5
         #for i in range(0, len(start_line)):
         #    edgy_img[start_line[i, 0], start_line[i, 1]] = 2.0
-        edgy_img[new_pxl[0], new_pxl[1]] = 2.5
+        edgy_img[new_pxl[0], new_pxl[1]] = 2.25
 
         #plt.figure()
         #plt.imshow(edgy_img[protPxl(new_pxl[0] - 29, edgy_img.shape[0]):protPxl(new_pxl[0] + 30, edgy_img.shape[0]),
@@ -511,6 +514,7 @@ def randomPathEdgeRace(img, edgy_img):
         step_path.insert(0, prev_pxl)
         path_vec = np.sign([step_path[-1][0] - step_path[0][0], step_path[-1][1] - step_path[0][1]])
 
+    edgy_img[new_pxl[0], new_pxl[1]] = 2.5
     plt.figure()
     plt.imshow(edgy_img[protPxl(new_pxl[0] - 29, edgy_img.shape[0]):protPxl(new_pxl[0] + 30, edgy_img.shape[0]),
                protPxl(new_pxl[1] - 29, edgy_img.shape[1]):protPxl(new_pxl[1] + 30, edgy_img.shape[1])])
