@@ -111,11 +111,17 @@ def main():
     while objNo < 3:
         # run one iteration of random path edge race
         objBool, objEdgeArray = randomPathEdgeRace(image, edgy_images)
+
         if objBool:
             print("An object was found :)")
             objNo = objNo + 1
-        else:
-            print("No object was found :(")
+
+            # show path drawn
+            edge_show(edgy_images, objEdgeArray)
+        #else:
+        #    print("No object was found :(")
+
+    exit()
 
     # using pooling history, reconstruct edgy array to the same size as the original image
     pdict['im_edge_array' + str(k)] = edgy_images

@@ -329,9 +329,10 @@ def unit_vec_dot(a, b):
     return np.dot(a, b) / ( np.sqrt(a.dot(a)) * np.sqrt(b.dot(b)) )
 
 # select a random direction vector and return the path traversed
-def random_step_direction(edgy_img, new_pxl, start_line, prev_path_vec, step_dist = 1):
-    # save the original pixel
-    print("@",new_pxl)
+def random_step_direction(edgy_img, new_pxl, start_line, prev_path_vec, step_dist = 1, debug = False):
+    if debug:
+        # save the original pixel
+        print("@",new_pxl)
 
     # using the start line coordinates, determine the vector in which the start line points
     if len(start_line) == 1:
@@ -346,7 +347,8 @@ def random_step_direction(edgy_img, new_pxl, start_line, prev_path_vec, step_dis
             start_vec = [0, 1]
     else:
         start_vec = np.sign([start_line[0][0]-start_line[-1][0], start_line[0][1]-start_line[-1][1]])
-    print("1. start_vec=", start_vec)
+    if debug:
+        print("1. start_vec=", start_vec)
 
 
     # determine the vector orthogonal to the start_line's vector
@@ -364,7 +366,8 @@ def random_step_direction(edgy_img, new_pxl, start_line, prev_path_vec, step_dis
     went_dist = False
     vec_list = [ [-1,-1], [-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0], [1,1] ]
     bad_vecs = []
-    print("\t 2. prev_path_vec=", prev_path_vec)
+    if debug:
+        print("\t 2. prev_path_vec=", prev_path_vec)
     while all_edge and not went_dist and len(vec_list) > 0:
 
         # reset all_edge boolean to iterate through each path_vec direction
@@ -379,7 +382,7 @@ def random_step_direction(edgy_img, new_pxl, start_line, prev_path_vec, step_dis
             # remove path vectors that do not satisfy the scalar product constraint
             for k in range(0, len(vec_list)):
                 pos_path_vec = np.array(vec_list[k])
-                print("-vec_list[k] =", vec_list[k], " has dot prod=",unit_vec_dot(prev_path_vec, pos_path_vec), " and adjacent edge=",edgy_img[new_pxl[0]+pos_path_vec[0],new_pxl[1]+pos_path_vec[1]])
+                #print("-vec_list[k] =", vec_list[k], " has dot prod=",unit_vec_dot(prev_path_vec, pos_path_vec), " and adjacent edge=",edgy_img[new_pxl[0]+pos_path_vec[0],new_pxl[1]+pos_path_vec[1]])
                 if not (prev_path_vec[0] == 0 and prev_path_vec[1] == 0):
                     # print("-/-dot product =", unit_vec_dot(prev_path_vec, pos_path_vec))
                     if unit_vec_dot(prev_path_vec, pos_path_vec) <= 0. or edgy_img[new_pxl[0]+pos_path_vec[0],new_pxl[1]+pos_path_vec[1]]==0:
@@ -392,15 +395,16 @@ def random_step_direction(edgy_img, new_pxl, start_line, prev_path_vec, step_dis
         if len(vec_list) > 0:
             path_vec = vec_list[randint(0, len(vec_list) - 1)]
         else:
-            print("All vectors eliminated")
+            if debug:
+                print("All vectors eliminated")
             break
-
-        print("\t \t  3. path_vec=", path_vec)
+        if debug:
+            print("\t \t  3. path_vec=", path_vec)
 
         # move half the value of pixel thickness in the path_vec direction
         for i in range(1, step_dist + 1):
             new_y, new_x = new_pxl + np.multiply(i, path_vec)
-            print("---value of (", new_y, ",", new_x, ")=", edgy_img[new_y, new_x])
+            #print("---value of (", new_y, ",", new_x, ")=", edgy_img[new_y, new_x])
             all_edge = (edgy_img[new_y, new_x] > 0.)
             # stop if we hit a non-edge: try another direction
             if not all_edge:
@@ -409,22 +413,26 @@ def random_step_direction(edgy_img, new_pxl, start_line, prev_path_vec, step_dis
             if i==step_dist:
                 went_dist = True
 
-    print("\t \t \t all_edge=", all_edge, "\t went_dist=", went_dist, "\t len(vec_list)=", len(vec_list))
+    if debug:
+        print("\t \t \t all_edge=", all_edge, "\t went_dist=", went_dist, "\t len(vec_list)=", len(vec_list))
+        print("\t \t \t plausible directions=", vec_list)
 
-    print("\t \t \t plausible directions=", vec_list)
     if len(vec_list) > 0:
         # move half the value of pixel thickness in the path_vec direction
         # this time storing the pixel coordinates in a list to return
         # only store if the path_direction is valid, and the first adjacent pxl is an edge
-        print("\t \t \t \t 4. (", new_y-path_vec[0], ",", new_x-path_vec[1], ")=", edgy_img[new_y-path_vec[0], new_x-path_vec[1]],"\n")
+        if debug:
+            print("\t \t \t \t 4. (", new_y-path_vec[0], ",", new_x-path_vec[1], ")=", edgy_img[new_y-path_vec[0], new_x-path_vec[1]],"\n")
         if edgy_img[new_y-path_vec[0], new_x-path_vec[1]] > 0.:
             for i in range(1, step_dist):
                 new_y, new_x = new_pxl + np.multiply(i, path_vec)
                 step_path.append([new_y,new_x])
         else:
-            print("No plausible direction")
+            if debug:
+                print("No plausible direction")
 
-    print("\t \t \t \t \t 5. step_path=",step_path)
+    if debug:
+        print("\t \t \t \t \t 5. step_path=",step_path)
 
     return step_path
 
@@ -440,12 +448,12 @@ def randomPathEdgeRace(img, edgy_img):
     #print("Start line shape = ", start_line.shape)
 
     # view the initial pixel region with the start line and initial pixel "shown"
-    for i in range(0, len(init_start_line)):
-        edgy_img[init_start_line[i,0], init_start_line[i,1]] = 2.0
-    edgy_img[initEdgePxl[0],initEdgePxl[1]]= 2.5
+    #for i in range(0, len(init_start_line)):
+    #    edgy_img[init_start_line[i,0], init_start_line[i,1]] = 2.0
+    #edgy_img[initEdgePxl[0],initEdgePxl[1]]= 2.5
     #plt.figure()
     #plt.imshow(edgy_img)
-    init_rad = np.max(pxl_radii)
+    #init_rad = np.max(pxl_radii)
     #plt.figure()
     #plt.imshow(edgy_img[(initEdgePxl[0] - init_rad - 1):(initEdgePxl[0] + init_rad + 1),
     #           (initEdgePxl[1] - init_rad -1):(initEdgePxl[1] + init_rad + 1)])
@@ -455,24 +463,27 @@ def randomPathEdgeRace(img, edgy_img):
     crossed_start_line = False
     step = 0
     new_pxl = initEdgePxl
+    edge_path = np.expand_dims(initEdgePxl, axis = 0)
     path_vec = [0, 0]
     #while (not crossed_start_line) and (step < 5000):
-    while (not crossed_start_line):
+    while not crossed_start_line:
         # update start_line from previous pxl_radii data
         start_line = (pxl_lst[np.argmin(pxl_radii)])
         prev_pxl = new_pxl
         #print("start_line=",start_line)
 
         # pick a semi-random direction, roughly orthogonal to the start line and return the path
-        step_path = random_step_direction(edgy_img, new_pxl, start_line, path_vec, step_dist = len(start_line)+1)
-        #print("step_path: ", step_path)
+        step_path = random_step_direction(edgy_img, new_pxl, start_line, path_vec, step_dist = len(start_line)+1, debug = False)
+        #print("step_path: ", np.array(step_path))
 
         if len(step_path) < 1:
             # break random path as no path can be found
-            print("No path found")
+            #print("No path found")
             break
         else:
             new_pxl = step_path[-1]
+            edge_path = np.concatenate((edge_path, np.array(step_path)), axis=0)
+            #print("@ step=", step, ",\t edge_path: ", edge_path)
 
         # check if we cross the initial start line
         #print("init_start_line=",init_start_line)
@@ -482,7 +493,7 @@ def randomPathEdgeRace(img, edgy_img):
             for j in range(0, len(init_start_line)):
                 if step_path[i][0] == init_start_line[j][0] and step_path[i][1] == init_start_line[j][1]:
                     crossed_start_line = True
-                    print("Crossed the start line!")
+                    #print("Crossed the start line!")
 
         # determine thicknesses of new pixel
         pxl_lst, pxl_radii = pxlThickness(edgy_img, new_pxl)
@@ -499,11 +510,11 @@ def randomPathEdgeRace(img, edgy_img):
         #print("new_pxl=", new_pxl)
 
         # graphics
-        for i in range(0, len(step_path)):
-            edgy_img[step_path[i][0], step_path[i][1]] = 1.5
+        #for i in range(0, len(step_path)):
+        #    edgy_img[step_path[i][0], step_path[i][1]] = 1.5
         #for i in range(0, len(start_line)):
         #    edgy_img[start_line[i, 0], start_line[i, 1]] = 2.0
-        edgy_img[new_pxl[0], new_pxl[1]] = 2.25
+        #edgy_img[new_pxl[0], new_pxl[1]] = 2.25
 
         #plt.figure()
         #plt.imshow(edgy_img[protPxl(new_pxl[0] - 29, edgy_img.shape[0]):protPxl(new_pxl[0] + 30, edgy_img.shape[0]),
@@ -514,29 +525,30 @@ def randomPathEdgeRace(img, edgy_img):
         step_path.insert(0, prev_pxl)
         path_vec = np.sign([step_path[-1][0] - step_path[0][0], step_path[-1][1] - step_path[0][1]])
 
-    edgy_img[new_pxl[0], new_pxl[1]] = 2.5
-    plt.figure()
-    plt.imshow(edgy_img[protPxl(new_pxl[0] - 29, edgy_img.shape[0]):protPxl(new_pxl[0] + 30, edgy_img.shape[0]),
-               protPxl(new_pxl[1] - 29, edgy_img.shape[1]):protPxl(new_pxl[1] + 30, edgy_img.shape[1])])
-    plt.figure()
-    plt.imshow(edgy_img)
-    plt.show()
+    # generate edge_path image
+    #edge_path_img = np.zeros(edgy_img.shape)
+    #edge_path_img[edge_path.T[0],edge_path.T[1]] = 2.5
+    #plt.figure()
+    #plt.imshow(edge_path_img)
 
-    exit()
-
-    if crossed_start_line:
-        # check direction in which the final path vector crossed
-        enclosedBool = True
-    else:
-        return False, ""
+    #edgy_img[new_pxl[0], new_pxl[1]] = 2.5
+    #plt.figure()
+    #plt.imshow(edgy_img[protPxl(new_pxl[0] - 29, edgy_img.shape[0]):protPxl(new_pxl[0] + 30, edgy_img.shape[0]),
+    #           protPxl(new_pxl[1] - 29, edgy_img.shape[1]):protPxl(new_pxl[1] + 30, edgy_img.shape[1])])
+    #plt.figure()
+    #plt.imshow(edgy_img)
+    #plt.figure()
+    #plt.imshow(edgy_img+edge_path_img)
+    #plt.show()
 
     # ensure we return the right array
-    if enclosedBool:
-        objPerimeter = edgePath
-    else:
-        objPerimeter = ""
+    #if crossed_start_line:
+        # add coordinate on the start line to complete the edge
+        # check direction in which the final path vector crossed?
+    #else:
+    #    objPerimeter = ""
 
-    return enclosedBool, objPerimeter
+    return crossed_start_line, edge_path
 
 # determine the edge pixels before the first non-edge pixel in a pre-determined direction
 def pxlLen(edgy_img, init_pxl, pxl_dir, edge):
@@ -557,3 +569,15 @@ def pxlLen(edgy_img, init_pxl, pxl_dir, edge):
 
     #print("Outgoing edge: ", edge)
     return edge
+
+# function to generate and display edge path on image
+def edge_show(edgy_images, objEdgeArray):
+    # generate edge_path image
+    edge_path_img = np.zeros(edgy_images.shape)
+    edge_path_img[objEdgeArray.T[0], objEdgeArray.T[1]] = 2.5
+    # plt.figure()
+    # plt.imshow(edge_path_img)
+
+    plt.figure()
+    plt.imshow(edgy_images + edge_path_img)
+    plt.show()
