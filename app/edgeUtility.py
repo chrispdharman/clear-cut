@@ -1,5 +1,6 @@
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
+from sklearn import svm
 from random import randint
 from skimage.measure import block_reduce
 import matplotlib.pyplot as plt
@@ -18,31 +19,84 @@ def traceObjectsInImage(origImage, method = "gradient"):
         print("No edge detection method specified. Stopping code execution.")
         exit()
 
+# count if there are any coordinates surrounding the chosen_one
+def cluster_counter(chosen_one, cluster_list, R = 10):
+    coord_list = []
+    for coord in range(0, len(cluster_list)):
+        x, y = cluster_list[coord]
+        if math.sqrt( (x - chosen_one[0])**2 + (y - chosen_one[1])**2 ) <= R:
+            coord_list.append(coord)
+    return coord_list
+
 # object tracing texture method
 def traceObjectsInImage_texture(origImage):
     # gradImage: create numpy 2D array of size (2n-1) of the original
     dimY, dimX, chanls = origImage.shape
 
     # append an image (in x-direction) for each of the separate channels
-    textureImage = np.zeros(shape=(dimY, dimX, 3), dtype = float)
+    textureImage = np.zeros(shape=(dimY, dimX, 2), dtype = float)
+    #textureImage = np.zeros(shape=(dimY, dimX, 3), dtype=float)
 
     # plot the red pixel pixel value versus the (r-g) % difference and (r-b) % difference
-    # plot3D this thing
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
+    # plot3D pre-setup
+    #fig = plt.figure()
+    # ax = fig.add_subplot(111, projection='3d')
 
     # loop over each dimension, populating the textureImage with various labels
+    remaining_pxls = []
     for j in range(0, dimY):
-        for i in range(0, dimY):
-            pt = origImage[j, i]
-            textureImage[j, i][0] = pt[0]
-            textureImage[j, i][1] = (pt[0] - pt[1])
-            textureImage[j, i][2] = (pt[0] - pt[2])
-            new_pt = pt = textureImage[j, i]
-            print("textureImage[",j,",",i,"]=",textureImage[j,i])
-            ax.scatter(textureImage[:,:,1],textureImage[:,:,2],textureImage[:,:,0])
+        #print("j/dimY =",j,"/",dimY)
+        for i in range(0, dimX):
+            # get a coordinate list of unclassified pixel coordinate
+            remaining_pxls.append([j, i])
 
+            # get difference between red and an `other' colour channel
+            pt = origImage[j, i]
+            textureImage[j, i][0] = (pt[0] - pt[1])
+            textureImage[j, i][1] = (pt[0] - pt[2])
+            #textureImage[j, i][2] = pt[0]
+
+            #print("textureImage[",j,",",i,"]=",textureImage[j,i])
+
+            # plot3D layer creation
+            #new_pt = textureImage[j, i]
+            #ax.scatter(new_pt[0], new_pt[1], new_pt[2])
+
+    # plot the (r-g) % difference and (r-b) % difference
+    plt.figure()
+    plt.scatter(textureImage[:,:,0], textureImage[:,:,1])
+    plt.xlabel("r-g")
+    plt.ylabel("r-b")
     plt.show()
+
+    # classify clustered regions
+    print("remaining_pxls=", remaining_pxls)
+    cluster_list = {}
+    R = 10
+    iter = 0
+    print(len(remaining_pxls))
+    while len(remaining_pxls) > 0:
+        # update classification label and create new list
+        iter = iter + 1
+        new_cluster_list = []
+
+        ## randomly select a pixel coordinate in the existing list
+        chosen_one = remaining_pxls[randint[(0,len(remaining_pxls))]]
+        print("chosen_one=", chosen_one)
+        cluster_list["label_" + str(iter)] = new_cluster_list
+        start_counter = 1
+
+        ## count number of pixels in radius "R" pxls around it, add these to the new cluster list.
+        inc_list = cluster_counter(chosen_one, cluster_list)
+        end_counter = start_counter + len(inc_list)
+        ## If the first evaluation does not have a change in counter value, append to the cluster_list["label_0"] list
+
+
+        ## If the number has not changed, try another direction until all directions are exhausted
+
+        ## if there are more pixels than before, keep going in that direction
+
+
     exit()
 
 
