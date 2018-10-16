@@ -1,12 +1,100 @@
 import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
 from random import randint
 from skimage.measure import block_reduce
 import matplotlib.pyplot as plt
 import math
 
 
-# object tracing method
-def traceObjectsInImage(origImage):
+# object tracing method handler
+def traceObjectsInImage(origImage, method = "gradient"):
+    if method == "gradient":
+        # good for handling sharp edges
+        return traceObjectsInImage_gradient(origImage)
+    elif method == "texture":
+        # good for handling blurred edges
+        return traceObjectsInImage_texture(origImage)
+    else:
+        print("No edge detection method specified. Stopping code execution.")
+        exit()
+
+# object tracing texture method
+def traceObjectsInImage_texture(origImage):
+    # gradImage: create numpy 2D array of size (2n-1) of the original
+    dimY, dimX, chanls = origImage.shape
+
+    # append an image (in x-direction) for each of the separate channels
+    textureImage = np.zeros(shape=(dimY, dimX, 3), dtype = float)
+
+    # plot the red pixel pixel value versus the (r-g) % difference and (r-b) % difference
+    # plot3D this thing
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    # loop over each dimension, populating the textureImage with various labels
+    for j in range(0, dimY):
+        for i in range(0, dimY):
+            pt = origImage[j, i]
+            textureImage[j, i][0] = pt[0]
+            textureImage[j, i][1] = (pt[0] - pt[1])
+            textureImage[j, i][2] = (pt[0] - pt[2])
+            new_pt = pt = textureImage[j, i]
+            print("textureImage[",j,",",i,"]=",textureImage[j,i])
+            ax.scatter(textureImage[:,:,1],textureImage[:,:,2],textureImage[:,:,0])
+
+    plt.show()
+    exit()
+
+
+    # Too small (shapes distinct but too much noise): 0.02
+    # Maybe right? 0.07 (Bob.jpeg)
+    # Too large (shaped not distinct enough): 0.10
+    imCut = 0.08
+    #imCut = 0.06
+    # display gradient image
+    '''plt.figure()
+    plt.imshow(np.absolute(gradImage.T), interpolation="nearest")
+    plt.figure()
+    plt.imshow(np.multiply((np.absolute(gradImage.T) < (1-imCut)*255),(np.absolute(gradImage.T) > imCut*255)))'''
+
+    # merge channels
+    mrgIm1 = mergeChannelsTracedImage(gradImage.T, origImage.shape)
+    #plt.figure()
+    #plt.imshow(mrgIm1)
+
+    edge_array = mergeChannelsTracedImage(
+        np.multiply((np.absolute(gradImage.T) < (1 - imCut) * 255), (np.absolute(gradImage.T) > imCut * 255)),
+        origImage.shape)
+    #plt.figure()
+    #plt.imshow(mrgIm2)
+
+    # append 0s (non-edge pixels) to any missing columns/rows
+    x_miss = origImage.shape[0] - edge_array.shape[0]
+    if x_miss == 0:
+        print("Same number of rows. Good!")
+    elif x_miss > 0:
+        print("Lost rows in compressing gradient. It can happen! Attempting to automatically dealing with it.")
+        edge_array = np.concatenate((edge_array, np.zeros((1, edge_array.shape[1]))), axis = 0)
+    else:
+        print("Gained rows in compressing gradient. Doesn't make sense!")
+        exit()
+
+    y_miss = origImage.shape[1] - edge_array.shape[1]
+    if y_miss == 0:
+        print("Same number of columns. Good!")
+    elif y_miss > 0:
+        print("Lost columns in compressing gradient. It can happen! Attempting to automatically dealing with it.")
+        edge_array = np.concatenate((edge_array, np.zeros((edge_array.shape[0], 1))), axis=1)
+    else:
+        print("Gained columns in compressing gradient. Doesn't make sense!")
+        exit()
+
+    # return an array of 0s (non-edges) and 1s (edges), same shape as passed in image
+    print("Is ",origImage.shape," = ",edge_array.shape,"?")
+    return edge_array
+
+# object tracing one-layer gradient method
+def traceObjectsInImage_gradient(origImage):
     # gradImage: create numpy 2D array of size (2n-1) of the original
     dimY, dimX, chanls = origImage.shape
 

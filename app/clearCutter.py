@@ -23,9 +23,9 @@ def main():
     #test_labels = np.asarray(mnist.test.labels, dtype=np.int32)
 
     # import single image
-    #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/Bob.jpeg"
+    imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/Bob.jpeg"
     #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/colorful1.jpeg"
-    imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/john1.jpg"
+    #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/john1.jpg"
     #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/minimal1.jpg"
     #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/heathers_cats.jpg"
     imageRaw = Image.open(imagePath)
@@ -87,7 +87,7 @@ def main():
 
     # MAKE AS FUNCTION PASSING IN AND RETURNING pdict
     # execute clearCut method and store in edge array for masking
-    edgy_images = traceObjectsInImage(image) # later think about implementing different methods as an argument
+    edgy_images = traceObjectsInImage(image, method = "texture") # later think about implementing different methods as an argument
 
     # remove edge pixels that cannot possibly contain an edge (may need to change order with edgeFiller?)
     edgy_images = edgeKiller(edgy_images, objectTolerance = 4)
