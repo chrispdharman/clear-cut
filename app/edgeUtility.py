@@ -20,12 +20,12 @@ def traceObjectsInImage(origImage, method = "gradient"):
         exit()
 
 # count if there are any coordinates surrounding the chosen_one
-def cluster_counter(chosen_one, cluster_list, R = 10):
+def cluster_counter(chosen_one, pxl_list, R = 10):
     coord_list = []
-    for coord in range(0, len(cluster_list)):
-        x, y = cluster_list[coord]
+    for coord in range(0, len(pxl_list)):
+        x, y = pxl_list[coord]
         if math.sqrt( (x - chosen_one[0])**2 + (y - chosen_one[1])**2 ) <= R:
-            coord_list.append(coord)
+            coord_list.append(pxl_list[coord])
     return coord_list
 
 # object tracing texture method
@@ -70,31 +70,60 @@ def traceObjectsInImage_texture(origImage):
     plt.show()
 
     # classify clustered regions
-    print("remaining_pxls=", remaining_pxls)
-    cluster_list = {}
+    #print("remaining_pxls=", remaining_pxls)
+    cluster_list = {
+        "label_0" : []
+    }
     R = 10
-    iter = 0
-    print(len(remaining_pxls))
+    lbl_no = 1
+    end_counter = 1
+    print("No. of remaining pxls (start) = ", len(remaining_pxls))
+    print("cluster_list (start) = ", cluster_list)
+    # keep finding clusters until all pxls have been labelled
     while len(remaining_pxls) > 0:
-        # update classification label and create new list
-        iter = iter + 1
-        new_cluster_list = []
+        iter = 0
+        no_new_points = False
 
-        ## randomly select a pixel coordinate in the existing list
-        chosen_one = remaining_pxls[randint[(0,len(remaining_pxls))]]
-        print("chosen_one=", chosen_one)
-        cluster_list["label_" + str(iter)] = new_cluster_list
-        start_counter = 1
+        # keep finding points in a clustered region
+        while not no_new_points:
+            # update counter, classification label and create new list
+            start_counter = end_counter
+            iter = iter + 1
 
-        ## count number of pixels in radius "R" pxls around it, add these to the new cluster list.
-        inc_list = cluster_counter(chosen_one, cluster_list)
-        end_counter = start_counter + len(inc_list)
-        ## If the first evaluation does not have a change in counter value, append to the cluster_list["label_0"] list
+            ## randomly select a pixel coordinate in the existing list
+            chosen_one = remaining_pxls[randint(0,len(remaining_pxls))]
+            #print("chosen_one=", chosen_one)
 
+            ## count number of pixels in radius "R" pxls around it, add these to the new cluster list.
+            inc_list = cluster_counter(chosen_one, remaining_pxls, R = 10)
+            end_counter = start_counter + len(inc_list)
+            #print("end_counter = ", end_counter)
 
-        ## If the number has not changed, try another direction until all directions are exhausted
+            ## If the first evaluation does not have a change in counter value, append to the cluster_list["label_0"] list
+            if iter == 1:
+                if end_counter == start_counter:
+                    cluster_list["label_0"].append(inc_list)
+                    break
+                else:
+                    cluster_list["label_" + str(lbl_no)] = []
+            else:
+                if end_counter == start_counter:
+                    ## If the number has not changed, try another direction until all directions are exhausted
+                    print("Exhausted direction")
+                    break
+                else:
+                    ## if there are more pixels than before, keep going in that direction
+                    print("Continue in this direction")
 
-        ## if there are more pixels than before, keep going in that direction
+            # append inc_list to current cluster list
+            cluster_list["label_" + str(lbl_no)].append(inc_list)
+            if not inc_list == []:
+                for coord in range(0, len(inc_list)):
+                    remaining_pxls.remove(inc_list[coord])
+            break
+
+    print("No. of remaining pxls (end) = ", len(remaining_pxls))
+    print("cluster_list (end) = ", cluster_list)
 
 
     exit()
