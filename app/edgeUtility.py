@@ -47,8 +47,6 @@ def traceObjectsInImage_texture(origImage):
     for j in range(0, dimY):
         #print("j/dimY =",j,"/",dimY)
         for i in range(0, dimX):
-            # get a coordinate list of unclassified pixel coordinate
-            remaining_pxls.append([j, i])
 
             # get difference between red and an `other' colour channel
             pt = origImage[j, i]
@@ -57,6 +55,8 @@ def traceObjectsInImage_texture(origImage):
             #textureImage[j, i][2] = pt[0]
 
             #print("textureImage[",j,",",i,"]=",textureImage[j,i])
+            # get a coordinate list of unclassified pixel coordinate
+            remaining_pxls.append([pt[0] - pt[1], pt[0] - pt[2]])
 
             # plot3D layer creation
             #new_pt = textureImage[j, i]
@@ -92,9 +92,9 @@ def traceObjectsInImage_texture(origImage):
         chosen_one = remaining_pxls[randint(0, len(remaining_pxls))]
 
         # convert to r-g and r-b
-        chosen_rgb = origImage[chosen_one[0], chosen_one[1]]
-        r_g = chosen_rgb[0] - chosen_rgb[1]
-        r_b = chosen_rgb[0] - chosen_rgb[2]
+        #chosen_rgb = origImage[chosen_one[0], chosen_one[1]]
+        #r_g = chosen_rgb[0] - chosen_rgb[1]
+        #r_b = chosen_rgb[0] - chosen_rgb[2]
 
         # keep finding points in a clustered region
         iter = 0
@@ -109,12 +109,12 @@ def traceObjectsInImage_texture(origImage):
             else:
                 dx, dy = [0, 0]
 
-            chsn_one = [r_g + dy, r_b + dx]
+            chsn_one = [chosen_one[0] + dy, chosen_one[1] + dx]
             print("iter=",iter,"\t chsn_one=", chsn_one)
             print("dx=", dx, " dy=", dy)
 
             ## count number of pixels in radius "R" pxls around it, add these to the new cluster list.
-            inc_list = cluster_counter(chsn_one, remaining_pxls, R = 50)
+            inc_list = cluster_counter(chsn_one, remaining_pxls, R = rad)
             end_counter = start_counter + len(inc_list)
             #print("end_counter = ", end_counter)
 
