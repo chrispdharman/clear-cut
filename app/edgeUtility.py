@@ -4,8 +4,8 @@ from sklearn import svm
 from random import randint
 from skimage.measure import block_reduce
 import matplotlib.pyplot as plt
+from matplotlib.patches import Circle
 import math
-
 
 # object tracing method handler
 def traceObjectsInImage(origImage, method = "gradient"):
@@ -63,39 +63,58 @@ def traceObjectsInImage_texture(origImage):
             #ax.scatter(new_pt[0], new_pt[1], new_pt[2])
 
     # plot the (r-g) % difference and (r-b) % difference
-    plt.figure()
-    plt.scatter(textureImage[:,:,0], textureImage[:,:,1])
-    plt.xlabel("r-g")
-    plt.ylabel("r-b")
-    plt.show()
+    #plt.figure()
+    #plt.scatter(textureImage[:,:,0], textureImage[:,:,1])
+    #plt.xlabel("r-g")
+    #plt.ylabel("r-b")
+    #plt.show()
+
+
+    # setup graph
+    fig, ax = plt.subplots(1)
+    ax.set_aspect('equal')
+    ax.scatter(textureImage[:,:,0], textureImage[:,:,1], s = 1)
 
     # classify clustered regions
     #print("remaining_pxls=", remaining_pxls)
     cluster_list = {
         "label_0" : []
     }
-    R = 10
+    rad = 10
     lbl_no = 1
     end_counter = 1
     print("No. of remaining pxls (start) = ", len(remaining_pxls))
     print("cluster_list (start) = ", cluster_list)
     # keep finding clusters until all pxls have been labelled
     while len(remaining_pxls) > 0:
-        iter = 0
-        no_new_points = False
+
+        # randomly select a pixel coordinate in the existing list
+        chosen_one = remaining_pxls[randint(0, len(remaining_pxls))]
+
+        # convert to r-g and r-b
+        chosen_rgb = origImage[chosen_one[0], chosen_one[1]]
+        r_g = chosen_rgb[0] - chosen_rgb[1]
+        r_b = chosen_rgb[0] - chosen_rgb[2]
 
         # keep finding points in a clustered region
+        iter = 0
+        no_new_points = False
         while not no_new_points:
             # update counter, classification label and create new list
             start_counter = end_counter
             iter = iter + 1
 
-            ## randomly select a pixel coordinate in the existing list
-            chosen_one = remaining_pxls[randint(0,len(remaining_pxls))]
-            #print("chosen_one=", chosen_one)
+            if iter > 1:
+                dx, dy = [ ( 2*( (iter-2) % 2) -1) * rad, ( 2*( (iter-2) // 2) -1) * rad]
+            else:
+                dx, dy = [0, 0]
+
+            chsn_one = [r_g + dy, r_b + dx]
+            print("iter=",iter,"\t chsn_one=", chsn_one)
+            print("dx=", dx, " dy=", dy)
 
             ## count number of pixels in radius "R" pxls around it, add these to the new cluster list.
-            inc_list = cluster_counter(chosen_one, remaining_pxls, R = 10)
+            inc_list = cluster_counter(chsn_one, remaining_pxls, R = 50)
             end_counter = start_counter + len(inc_list)
             #print("end_counter = ", end_counter)
 
@@ -103,30 +122,41 @@ def traceObjectsInImage_texture(origImage):
             if iter == 1:
                 if end_counter == start_counter:
                     cluster_list["label_0"].append(inc_list)
-                    break
+                    no_new_points = True
                 else:
                     cluster_list["label_" + str(lbl_no)] = []
+                    # go to next iter
             else:
                 if end_counter == start_counter:
                     ## If the number has not changed, try another direction until all directions are exhausted
                     print("Exhausted direction")
-                    break
                 else:
                     ## if there are more pixels than before, keep going in that direction
                     print("Continue in this direction")
+
+            if end_counter == start_counter:
+                ax.add_patch(Circle((chsn_one[0], chsn_one[1]), rad, facecolor=(0, 0, 0, 0), edgecolor='red'))
+            else:
+                ax.add_patch(Circle((chsn_one[0], chsn_one[1]), rad, facecolor=(0, 0, 0, 0), edgecolor='green'))
 
             # append inc_list to current cluster list
             cluster_list["label_" + str(lbl_no)].append(inc_list)
             if not inc_list == []:
                 for coord in range(0, len(inc_list)):
                     remaining_pxls.remove(inc_list[coord])
-            break
 
-    print("No. of remaining pxls (end) = ", len(remaining_pxls))
-    print("cluster_list (end) = ", cluster_list)
+            if iter == 5:
+                no_new_points = True
 
+        print("No. of remaining pxls (end) = ", len(remaining_pxls))
+        print("cluster_list (end) = ", cluster_list)
 
-    exit()
+        # plot the (r-g) % difference and (r-b) % difference
+        plt.xlabel("r-g")
+        plt.ylabel("r-b")
+        plt.show()
+
+        exit()
 
 
     # Too small (shapes distinct but too much noise): 0.02
