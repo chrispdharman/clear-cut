@@ -28,6 +28,18 @@ def cluster_counter(chosen_one, pxl_list, R = 10):
             coord_list.append(pxl_list[coord])
     return coord_list
 
+# boolean to check if this is a new direction or not
+def new_direction(chsn_one, prev_directions):
+    for prev_one in prev_directions:
+        if chsn_one[0] == prev_one[0] and chsn_one[1] == prev_one[1]:
+            return False
+    return True
+
+def reduce_iter(i):
+    while i>5:
+        i = i -8
+    return i
+
 # object tracing texture method
 def traceObjectsInImage_texture(origImage):
     # gradImage: create numpy 2D array of size (2n-1) of the original
@@ -103,9 +115,15 @@ def traceObjectsInImage_texture(origImage):
             # update counter, classification label and create new list
             start_counter = end_counter
             iter = iter + 1
+            alive_direction = []
+            dead_direction = []
 
             if iter > 1:
-                dx, dy = [ ( 2*( (iter-2) % 2) -1) * rad, ( 2*( (iter-2) // 2) -1) * rad]
+                mult = rad * (1 + (iter - 2) // 8)
+                if (iter - 2) % 8 < 4:
+                    dx, dy = [ ( 2*( (reduce_iter(iter)-2) % 2) -1) * mult, ( 2*( (reduce_iter(iter)-2) // 2) -1) * mult]
+                else:
+                    
             else:
                 dx, dy = [0, 0]
 
@@ -114,7 +132,13 @@ def traceObjectsInImage_texture(origImage):
             print("dx=", dx, " dy=", dy)
 
             ## count number of pixels in radius "R" pxls around it, add these to the new cluster list.
-            inc_list = cluster_counter(chsn_one, remaining_pxls, R = rad)
+            # make sure you don't re-evaluate a previous circle
+            new_dir_bool = new_direction(chsn_one, dead_direction + alive_direction)
+            if new_dir_bool:
+                inc_list = cluster_counter(chsn_one, remaining_pxls, R = rad)
+            else:
+                # already covered this direction
+                inc_list = []
             end_counter = start_counter + len(inc_list)
             #print("end_counter = ", end_counter)
 
@@ -126,11 +150,13 @@ def traceObjectsInImage_texture(origImage):
                 else:
                     cluster_list["label_" + str(lbl_no)] = []
                     # go to next iter
-            else:
+            elif new_dir_bool:
                 if end_counter == start_counter:
+                    dead_direction.append(chsn_one)
                     ## If the number has not changed, try another direction until all directions are exhausted
                     print("Exhausted direction")
                 else:
+                    alive_direction.append(chsn_one)
                     ## if there are more pixels than before, keep going in that direction
                     print("Continue in this direction")
 
