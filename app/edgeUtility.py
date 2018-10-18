@@ -42,7 +42,7 @@ def reduce_iter(i):
 
 # cluster bubble nucleate building block code
 # randomly select a pixel coordinate in the existing list
-def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, end_counter = 1):
+def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, iter_max = 9, init = False, end_counter = 1):
         # keep finding points in a clustered region
         iter = 0
         fully_nucleated = False
@@ -80,7 +80,7 @@ def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, end_counter
             #print("end_counter = ", end_counter)
 
             ## If the first evaluation does not have a change in counter value, append to the cluster_list["label_0"] list
-            if iter == 1:
+            if iter == 1 and init:
                 if end_counter == start_counter:
                     cluster_list["label_0"].append(inc_list)
                     fully_nucleated = True
@@ -106,7 +106,7 @@ def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, end_counter
                 for coord in range(0, len(inc_list)):
                     remaining_pxls.remove(inc_list[coord])
 
-            if iter == 17:
+            if iter == iter_max:
                 fully_nucleated = True
 
         return remaining_pxls, cluster_list, alive_direction, dead_direction
@@ -177,17 +177,24 @@ def traceObjectsInImage_texture(origImage):
         chosen_one = remaining_pxls[randint(0, len(remaining_pxls))]
         chosen_one = [255//2, 255//2]
 
-        # work out how to implement this!
-        remaining_pxls, cluster_list, alive, dead = clstr_nucleate(chosen_one, rad, lbl_no, remaining_pxls, cluster_list)
+        # initial nucleation
+        remaining_pxls, cluster_list, alive, dead = clstr_nucleate(chosen_one, rad, lbl_no, remaining_pxls, cluster_list, iter_max = 17, init = True)
         alive_direction = alive_direction + alive
         dead_direction = dead_direction +  dead
+
+        # for any outermost bubbles that found new pixels, nucleate another bubble around them
+        for dirs in alive_direction:
+            if abs(dirs[0]-chosen_one[0])==2*rad or abs(dirs[1]-chosen_one[1])==2*rad:
+                print("I'm outer alive!: ",dirs, "--> (", abs(dirs[0]-chosen_one[0]),",",abs(dirs[1]-chosen_one[1]))
+                remaining_pxls, cluster_list, alive, dead = clstr_nucleate(dirs, rad, lbl_no, remaining_pxls,
+                                                                           cluster_list)
+                alive_direction = alive_direction + alive
+                dead_direction = dead_direction + dead
 
         for coor in dead_direction:
             ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor='red'))
         for coor in alive_direction:
             ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor='green'))
-
-        # keep finding points in a clustered region
 
         print("No. of remaining pxls (end) = ", len(remaining_pxls))
         print("cluster_list (end) = ", cluster_list)
