@@ -92,7 +92,7 @@ def traceObjectsInImage_texture(origImage):
     cluster_list = {
         "label_0" : []
     }
-    rad = 10
+    rad = 8
     lbl_no = 1
     end_counter = 1
     print("No. of remaining pxls (start) = ", len(remaining_pxls))
@@ -102,6 +102,7 @@ def traceObjectsInImage_texture(origImage):
 
         # randomly select a pixel coordinate in the existing list
         chosen_one = remaining_pxls[randint(0, len(remaining_pxls))]
+        chosen_one = [255//2, 255//2]
 
         # convert to r-g and r-b
         #chosen_rgb = origImage[chosen_one[0], chosen_one[1]]
@@ -121,9 +122,11 @@ def traceObjectsInImage_texture(origImage):
             if iter > 1:
                 mult = rad * (1 + (iter - 2) // 8)
                 if (iter - 2) % 8 < 4:
-                    dx, dy = [ ( 2*( (reduce_iter(iter)-2) % 2) -1) * mult, ( 2*( (reduce_iter(iter)-2) // 2) -1) * mult]
+                    dx, dy = [(2 * ((reduce_iter(iter) - 2) % 2) - 1) * mult,
+                              (2 * ((reduce_iter(iter) - 2) // 2) - 1) * mult]
                 else:
-                    
+                    dx, dy = [(int(round( -1 * math.cos((iter-6)*math.pi/2) ))) * mult,
+                              (int(round( math.sin((iter-6)*math.pi/2) ))) * mult]
             else:
                 dx, dy = [0, 0]
 
@@ -171,7 +174,7 @@ def traceObjectsInImage_texture(origImage):
                 for coord in range(0, len(inc_list)):
                     remaining_pxls.remove(inc_list[coord])
 
-            if iter == 5:
+            if iter == 17:
                 no_new_points = True
 
         print("No. of remaining pxls (end) = ", len(remaining_pxls))
