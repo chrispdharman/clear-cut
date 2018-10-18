@@ -40,6 +40,77 @@ def reduce_iter(i):
         i = i -8
     return i
 
+# cluster bubble nucleate building block code
+# randomly select a pixel coordinate in the existing list
+def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, end_counter = 1):
+        # keep finding points in a clustered region
+        iter = 0
+        fully_nucleated = False
+        alive_direction = []
+        dead_direction = []
+        while not fully_nucleated:
+            # update counter, classification label and create new list
+            start_counter = end_counter
+            iter = iter + 1
+
+            if iter > 1:
+                mult = rad * (1 + (iter - 2) // 8)
+                if (iter - 2) % 8 < 4:
+                    dx, dy = [(2 * ((reduce_iter(iter) - 2) % 2) - 1) * mult,
+                              (2 * ((reduce_iter(iter) - 2) // 2) - 1) * mult]
+                else:
+                    dx, dy = [(int(round( -1 * math.cos((iter-6)*math.pi/2) ))) * mult,
+                              (int(round( math.sin((iter-6)*math.pi/2) ))) * mult]
+            else:
+                dx, dy = [0, 0]
+
+            chsn_one = [point[0] + dy, point[1] + dx]
+            print("iter=",iter,"\t chsn_one=", chsn_one)
+            print("dx=", dx, " dy=", dy)
+
+            ## count number of pixels in radius "R" pxls around it, add these to the new cluster list.
+            # make sure you don't re-evaluate a previous circle
+            new_dir_bool = new_direction(chsn_one, dead_direction + alive_direction)
+            if new_dir_bool:
+                inc_list = cluster_counter(chsn_one, remaining_pxls, R = rad)
+            else:
+                # already covered this direction
+                inc_list = []
+            end_counter = start_counter + len(inc_list)
+            #print("end_counter = ", end_counter)
+
+            ## If the first evaluation does not have a change in counter value, append to the cluster_list["label_0"] list
+            if iter == 1:
+                if end_counter == start_counter:
+                    cluster_list["label_0"].append(inc_list)
+                    fully_nucleated = True
+                else:
+                    cluster_list["label_" + str(lbl_no)] = []
+                    # go to next iter
+            elif new_dir_bool:
+                if end_counter == start_counter:
+                    ## If the number has not changed, try another direction until all directions are exhausted
+                    print("Exhausted direction")
+                else:
+                    ## if there are more pixels than before, keep going in that direction
+                    print("Continue in this direction")
+
+            if end_counter == start_counter:
+                dead_direction.append(chsn_one)
+            else:
+                alive_direction.append(chsn_one)
+
+            # append inc_list to current cluster list
+            cluster_list["label_" + str(lbl_no)].append(inc_list)
+            if not inc_list == []:
+                for coord in range(0, len(inc_list)):
+                    remaining_pxls.remove(inc_list[coord])
+
+            if iter == 17:
+                fully_nucleated = True
+
+        return remaining_pxls, cluster_list, alive_direction, dead_direction
+
 # object tracing texture method
 def traceObjectsInImage_texture(origImage):
     # gradImage: create numpy 2D array of size (2n-1) of the original
@@ -99,83 +170,24 @@ def traceObjectsInImage_texture(origImage):
     print("cluster_list (start) = ", cluster_list)
     # keep finding clusters until all pxls have been labelled
     while len(remaining_pxls) > 0:
+        alive_direction = []
+        dead_direction = []
 
         # randomly select a pixel coordinate in the existing list
         chosen_one = remaining_pxls[randint(0, len(remaining_pxls))]
         chosen_one = [255//2, 255//2]
 
-        # convert to r-g and r-b
-        #chosen_rgb = origImage[chosen_one[0], chosen_one[1]]
-        #r_g = chosen_rgb[0] - chosen_rgb[1]
-        #r_b = chosen_rgb[0] - chosen_rgb[2]
+        # work out how to implement this!
+        remaining_pxls, cluster_list, alive, dead = clstr_nucleate(chosen_one, rad, lbl_no, remaining_pxls, cluster_list)
+        alive_direction = alive_direction + alive
+        dead_direction = dead_direction +  dead
+
+        for coor in dead_direction:
+            ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor='red'))
+        for coor in alive_direction:
+            ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor='green'))
 
         # keep finding points in a clustered region
-        iter = 0
-        no_new_points = False
-        while not no_new_points:
-            # update counter, classification label and create new list
-            start_counter = end_counter
-            iter = iter + 1
-            alive_direction = []
-            dead_direction = []
-
-            if iter > 1:
-                mult = rad * (1 + (iter - 2) // 8)
-                if (iter - 2) % 8 < 4:
-                    dx, dy = [(2 * ((reduce_iter(iter) - 2) % 2) - 1) * mult,
-                              (2 * ((reduce_iter(iter) - 2) // 2) - 1) * mult]
-                else:
-                    dx, dy = [(int(round( -1 * math.cos((iter-6)*math.pi/2) ))) * mult,
-                              (int(round( math.sin((iter-6)*math.pi/2) ))) * mult]
-            else:
-                dx, dy = [0, 0]
-
-            chsn_one = [chosen_one[0] + dy, chosen_one[1] + dx]
-            print("iter=",iter,"\t chsn_one=", chsn_one)
-            print("dx=", dx, " dy=", dy)
-
-            ## count number of pixels in radius "R" pxls around it, add these to the new cluster list.
-            # make sure you don't re-evaluate a previous circle
-            new_dir_bool = new_direction(chsn_one, dead_direction + alive_direction)
-            if new_dir_bool:
-                inc_list = cluster_counter(chsn_one, remaining_pxls, R = rad)
-            else:
-                # already covered this direction
-                inc_list = []
-            end_counter = start_counter + len(inc_list)
-            #print("end_counter = ", end_counter)
-
-            ## If the first evaluation does not have a change in counter value, append to the cluster_list["label_0"] list
-            if iter == 1:
-                if end_counter == start_counter:
-                    cluster_list["label_0"].append(inc_list)
-                    no_new_points = True
-                else:
-                    cluster_list["label_" + str(lbl_no)] = []
-                    # go to next iter
-            elif new_dir_bool:
-                if end_counter == start_counter:
-                    dead_direction.append(chsn_one)
-                    ## If the number has not changed, try another direction until all directions are exhausted
-                    print("Exhausted direction")
-                else:
-                    alive_direction.append(chsn_one)
-                    ## if there are more pixels than before, keep going in that direction
-                    print("Continue in this direction")
-
-            if end_counter == start_counter:
-                ax.add_patch(Circle((chsn_one[0], chsn_one[1]), rad, facecolor=(0, 0, 0, 0), edgecolor='red'))
-            else:
-                ax.add_patch(Circle((chsn_one[0], chsn_one[1]), rad, facecolor=(0, 0, 0, 0), edgecolor='green'))
-
-            # append inc_list to current cluster list
-            cluster_list["label_" + str(lbl_no)].append(inc_list)
-            if not inc_list == []:
-                for coord in range(0, len(inc_list)):
-                    remaining_pxls.remove(inc_list[coord])
-
-            if iter == 17:
-                no_new_points = True
 
         print("No. of remaining pxls (end) = ", len(remaining_pxls))
         print("cluster_list (end) = ", cluster_list)
