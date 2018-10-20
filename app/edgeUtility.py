@@ -40,6 +40,42 @@ def reduce_iter(i):
         i = i -8
     return i
 
+def enclosed_points(remaining_pxls, dead_path, alive_direction, rad, method = "get"):
+    # determine the alive points within the enclosed path: dead_path
+    #print("np.array(dead_path).T=", np.array(dead_path).T)
+    y_lst = np.array(dead_path).T[0]
+    min_y = np.min(y_lst)
+    max_y = np.max(y_lst)
+    #print("min_y=", min_y, " max_y=", max_y)
+
+    # determine and remove all remaining pixels within the random path
+    enc_list = []
+    print("dead_path=",dead_path)
+    for y0 in range(min_y, max_y + rad, rad):
+        # determine the domain of x within the random path at this value of y
+        x_lst = []
+        for pt in dead_path:
+            #print("pt=",pt, " pt[0]=", pt[0], " and x0=", y0)
+            if pt[0] == y0:
+                x_lst.append([pt[0], pt[1]])
+        #print(">x_lst=",x_lst)
+        x_lst = np.array(x_lst)
+        min_x = np.min(x_lst)
+        max_x = np.max(x_lst)
+        #print(">min_x=", min_x, " max_x=", max_x)
+        for x0 in range(min_x, max_x + rad, rad):
+            for cood in alive_direction:
+                #print(">>cood=", cood, " y0=", y0, " x0=", x0)
+                if method == "get":
+                    enc_list.append(cood)
+                elif method == "delete":
+                    # remove pixels within a circle of radius rad
+                    enc_list += cluster_counter(cood, remaining_pxls, R=rad)
+                else:
+                    print("Please specify a method for enclosed_points(...)")
+    print("enc_list=",enc_list)
+    return enc_list
+
 # cluster bubble nucleate building block code
 # randomly select a pixel coordinate in the existing list
 def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, iter_max = 9, init = False, end_counter = 1):
@@ -103,6 +139,8 @@ def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, iter_max = 
 
         # append inc_list to current cluster list
         cluster_list["label_" + str(lbl_no)].append(inc_list)
+
+        # this might present a problem for post-init determination
         if not inc_list == []:
             for coord in range(0, len(inc_list)):
                 remaining_pxls.remove(inc_list[coord])
@@ -153,11 +191,8 @@ def traceObjectsInImage_texture(origImage):
     #plt.ylabel("r-b")
     #plt.show()
 
-
-    # setup graph
-    fig, ax = plt.subplots(1)
-    ax.set_aspect('equal')
-    ax.scatter(textureImage[:,:,0], textureImage[:,:,1], s = 1)
+    # keep track off original remaining pixels
+    orig_remaining_pxls = remaining_pxls.copy()
 
     # classify clustered regions
     #print("remaining_pxls=", remaining_pxls)
@@ -176,12 +211,17 @@ def traceObjectsInImage_texture(origImage):
         lbl_no += 1
         print("Cluster [", lbl_no,"] determination in progress...")
 
+        # setup graph
+        fig, ax = plt.subplots(1)
+        ax.set_aspect('equal')
+        ax.scatter(textureImage[:, :, 0], textureImage[:, :, 1], s=1)
+
         # randomly select a pixel coordinate in the existing list
         chosen_one = remaining_pxls[randint(0, len(remaining_pxls))]
         chosen_one = [255//2, 255//2]
 
         # initial nucleation
-        remaining_pxls, cluster_list, alive, dead = clstr_nucleate(chosen_one, rad, lbl_no, remaining_pxls, cluster_list, iter_max = 17, init = True)
+        remaining_pxls, cluster_list, alive, dead = clstr_nucleate(chosen_one, rad, lbl_no, orig_remaining_pxls, cluster_list, iter_max = 17, init = True)
         alive_direction += alive
         dead_direction += dead
 
@@ -193,9 +233,14 @@ def traceObjectsInImage_texture(origImage):
         while not all_outer_dead:
             # for any outermost bubbles that found new pixels, nucleate another bubble around them
             for dirs in alive_direction:
-                if abs(dirs[0]-chosen_one[0])==2*rad or abs(dirs[1]-chosen_one[1])==2*rad:
-                    print("\t I'm outer alive!: ",dirs, "--> (", abs(dirs[0]-chosen_one[0]),",",abs(dirs[1]-chosen_one[1]))
-                    remaining_pxls, cluster_list, alive, dead = clstr_nucleate(dirs, rad, lbl_no, remaining_pxls,
+
+                # re-nucleates on alive circles that are 2*rad distance away from initial point
+                #if abs(dirs[0]-chosen_one[0])==2*rad or abs(dirs[1]-chosen_one[1])==2*rad:
+
+                # re-nucleates on alive circles that are 2*rad distance away from initial point
+                if not ((dirs[0] == chosen_one[0]) and (dirs[1] == chosen_one[1])):
+                    #print("\t I'm outer alive!: ",dirs, "--> (", abs(dirs[0]-chosen_one[0]),",",abs(dirs[1]-chosen_one[1]))
+                    remaining_pxls, cluster_list, alive, dead = clstr_nucleate(dirs, rad, lbl_no, orig_remaining_pxls,
                                                                                cluster_list)
                     # make sure alive directions are not overwritten by dead ones!
                     alive_direction += alive
@@ -215,27 +260,56 @@ def traceObjectsInImage_texture(origImage):
                     for edge in dead_direction:
                         edgy_img[ edge[0], edge[1] ] = 1
 
+                    # multiple (5) attempts at finding a random path within the dead directions
                     attempt = 0
                     while not all_outer_dead and attempt < 5:
                         attempt += 1
-                        print("attempt=",attempt)
-                        all_outer_dead, _ = randomPathEdgeRace(edgy_img, adj_size = rad)
-                    print("\t all_outer_dead=",all_outer_dead)
+                        #print("attempt=",attempt)
+                        all_outer_dead, dead_path = randomPathEdgeRace(edgy_img, adj_size = rad, showPath = False)
 
+                        # if enclosed path is too small, add enclosed pxls to label 0
+                        if all_outer_dead and len(dead_path)<9:
+                            clstr_pxls = enclosed_points(remaining_pxls, dead_path, alive_direction, rad)
+                            if len(clstr_pxls) == 0:
+                                # remove from current label, put into label 0 instead
+                                cluster_list["label_" + str(lbl_no)].remove(clstr_pxls)
+                                cluster_list["label_0"].append(clstr_pxls)
+                            #print(">>>clstr_pxls=",clstr_pxls)
+                            all_outer_dead = False
+                    #print("\t all_outer_dead=",all_outer_dead)
+
+                    # break for loop if enclosed path found: no need to iterate over more alive directions
+                    if all_outer_dead:
+                        break
+
+        # graphics
         for coor in alive_direction:
             ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor='green'))
         for coor in dead_direction:
             ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor='red'))
-
-        print("No. of remaining pxls (end) = ", len(remaining_pxls))
-        print("cluster_list (end) = ", cluster_list)
+        for coor in dead_path:
+            ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor='blue'))
 
         # plot the (r-g) % difference and (r-b) % difference
         plt.xlabel("r-g")
         plt.ylabel("r-b")
         plt.show()
 
-        exit()
+        enc_list = enclosed_points(remaining_pxls, dead_path, alive_direction, rad, method = "delete")
+        if len(enc_list) > 0:
+            remaining_pxls.remove(enc_list)
+        else:
+            print("No pixels in the path found")
+
+        # update original remaining pixels to remove the pxls that were just labelled
+        # repeat cluster finding until remaining_pxls is empty
+        orig_remaining_pxls = remaining_pxls.copy()
+
+        print("No. of remaining pxls (end) = ", len(remaining_pxls))
+        print("cluster_list (end) = ", cluster_list)
+
+    print("Labelled all data!")
+    exit()
 
 
     # Too small (shapes distinct but too much noise): 0.02
@@ -665,7 +739,7 @@ def random_step_direction(edgy_img, new_pxl, start_line, prev_path_vec, adj_size
 
         # check if this is the first random step (i.e. no previous path vector) or not
         if prev_path_vec[0] == 0  and prev_path_vec[1] == 0:
-            print("start_vec=",start_vec)
+            #print("start_vec=",start_vec)
             vec_list.remove([start_vec[0], start_vec[1]])
             vec_list.remove([-1*start_vec[0], -1*start_vec[1]])
         else:
@@ -733,17 +807,19 @@ def random_step_direction(edgy_img, new_pxl, start_line, prev_path_vec, adj_size
 
 # edge_img is a rectangular array of 1s and 0s
 # adj_size details how far an "adjacent" pixel is considered
-def randomPathEdgeRace(edgy_img, adj_size = 1):
+def randomPathEdgeRace(edgy_img, adj_size = 1 , showPath = False):
     # update the edge pixel position list
     posList = edgePxlPos(edgy_img)
-    graph_img = np.copy(edgy_img)
+    #print("posList=",posList)
+    if showPath:
+        graph_img = np.copy(edgy_img)
 
     # pick random edge pixel to start from
     initEdgePxl = posList[randint(0,posList.shape[0]-1)]
     #initEdgePxl = [56, 150]
     pxl_lst, pxl_radii = pxlThickness(edgy_img, initEdgePxl)
     init_start_line = (pxl_lst[np.argmin(pxl_radii)])
-    print("init_start_line=",init_start_line)
+    #print("init_start_line=",init_start_line)
     #print("Start line shape = ", start_line.shape)
 
     # view the initial pixel region with the start line and initial pixel "shown"
@@ -772,7 +848,7 @@ def randomPathEdgeRace(edgy_img, adj_size = 1):
         #print("start_line=",start_line)
 
         # pick a semi-random direction, roughly orthogonal to the start line and return the path
-        step_path = random_step_direction(edgy_img, new_pxl, start_line, path_vec, adj_size, step_dist = len(start_line)+1, debug = True)
+        step_path = random_step_direction(edgy_img, new_pxl, start_line, path_vec, adj_size, step_dist = len(start_line)+1, debug = False)
         #print("step_path: ", np.array(step_path))
 
         if len(step_path) < 1:
@@ -782,10 +858,10 @@ def randomPathEdgeRace(edgy_img, adj_size = 1):
         else:
             new_pxl = step_path[-1]
             edge_path = np.concatenate((edge_path, np.array(step_path)), axis=0)
-            print("@ step=", step, ",\t edge_path: ", edge_path)
+            #print("@ step=", step, ",\t edge_path: ", edge_path)
 
         # check if we cross the initial start line
-        print("init_start_line=",init_start_line)
+        #print("init_start_line=",init_start_line)
         for i in range(0, len(step_path)):
             #print("step_path[i]=",step_path[i])
             #print("step_path[i] in init_start_line =", step_path[i] in init_start_line)
@@ -808,17 +884,18 @@ def randomPathEdgeRace(edgy_img, adj_size = 1):
         #print("start_line=",start_line)
         #print("new_pxl=", new_pxl)
 
-        # graphics
-        for i in range(0, len(step_path)):
-            graph_img[step_path[i][0], step_path[i][1]] = 1.5
-        for i in range(0, len(start_line)):
-            graph_img[start_line[i, 0], start_line[i, 1]] = 2.0
-        graph_img[new_pxl[0], new_pxl[1]] = 2.25
+        if showPath:
+            # graphics
+            for i in range(0, len(step_path)):
+                graph_img[step_path[i][0], step_path[i][1]] = 1.5
+            for i in range(0, len(start_line)):
+                graph_img[start_line[i, 0], start_line[i, 1]] = 2.0
+            graph_img[new_pxl[0], new_pxl[1]] = 2.25
 
-        plt.figure()
-        plt.imshow(graph_img[protPxl(new_pxl[0] - 49, graph_img.shape[0]):protPxl(new_pxl[0] + 50, graph_img.shape[0]),
-                   protPxl(new_pxl[1] - 49, graph_img.shape[1]):protPxl(new_pxl[1] + 50, graph_img.shape[1])])
-        plt.show()
+            plt.figure()
+            plt.imshow(graph_img[protPxl(new_pxl[0] - 49, graph_img.shape[0]):protPxl(new_pxl[0] + 50, graph_img.shape[0]),
+                       protPxl(new_pxl[1] - 49, graph_img.shape[1]):protPxl(new_pxl[1] + 50, graph_img.shape[1])])
+            plt.show()
 
         # determine previous path_vec
         step_path.insert(0, prev_pxl)
