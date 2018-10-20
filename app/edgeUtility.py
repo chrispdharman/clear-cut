@@ -40,24 +40,24 @@ def reduce_iter(i):
         i = i -8
     return i
 
-def enclosed_points(remaining_pxls, dead_path, alive_direction, rad, method = "get"):
+def enclosed_points(remaining_pxls, dead_path, alive_direction, rad):
     # determine the alive points within the enclosed path: dead_path
-    #print("np.array(dead_path).T=", np.array(dead_path).T)
-    y_lst = np.array(dead_path).T[0]
+    #print("(np.array(dead_path).T)[0]=", (np.array(dead_path).T)[0])
+    y_lst = (np.array(dead_path).T)[0]
     min_y = np.min(y_lst)
     max_y = np.max(y_lst)
     #print("min_y=", min_y, " max_y=", max_y)
 
     # determine and remove all remaining pixels within the random path
     enc_list = []
-    print("dead_path=",dead_path)
+    #print("dead_path=",dead_path)
     for y0 in range(min_y, max_y + rad, rad):
         # determine the domain of x within the random path at this value of y
         x_lst = []
         for pt in dead_path:
             #print("pt=",pt, " pt[0]=", pt[0], " and x0=", y0)
             if pt[0] == y0:
-                x_lst.append([pt[0], pt[1]])
+                x_lst.append(pt[1])
         #print(">x_lst=",x_lst)
         x_lst = np.array(x_lst)
         min_x = np.min(x_lst)
@@ -65,15 +65,10 @@ def enclosed_points(remaining_pxls, dead_path, alive_direction, rad, method = "g
         #print(">min_x=", min_x, " max_x=", max_x)
         for x0 in range(min_x, max_x + rad, rad):
             for cood in alive_direction:
-                #print(">>cood=", cood, " y0=", y0, " x0=", x0)
-                if method == "get":
-                    enc_list.append(cood)
-                elif method == "delete":
-                    # remove pixels within a circle of radius rad
+                if cood[0]==y0 and cood[1]==x0:
+                    #print(">>cood=", cood, " y0=", y0, " x0=", x0)
                     enc_list += cluster_counter(cood, remaining_pxls, R=rad)
-                else:
-                    print("Please specify a method for enclosed_points(...)")
-    print("enc_list=",enc_list)
+    #print("enc_list=",enc_list)
     return enc_list
 
 # cluster bubble nucleate building block code
@@ -119,7 +114,7 @@ def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, iter_max = 
         ## If the first evaluation does not have a change in counter value, append to the cluster_list["label_0"] list
         if iter == 1 and init:
             if end_counter == start_counter:
-                cluster_list["label_0"].append(inc_list)
+                cluster_list["label_0"] += inc_list
                 fully_nucleated = True
             else:
                 cluster_list["label_" + str(lbl_no)] = []
@@ -138,7 +133,10 @@ def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, iter_max = 
             alive_direction.append(chsn_one)
 
         # append inc_list to current cluster list
-        cluster_list["label_" + str(lbl_no)].append(inc_list)
+        #print("Before: ",cluster_list["label_" + str(lbl_no)])
+        #print("--Add inc_list=",inc_list)
+        cluster_list["label_" + str(lbl_no)] += inc_list
+        #print("After: ", cluster_list["label_" + str(lbl_no)])
 
         # this might present a problem for post-init determination
         if not inc_list == []:
@@ -270,12 +268,23 @@ def traceObjectsInImage_texture(origImage):
                         # if enclosed path is too small, add enclosed pxls to label 0
                         if all_outer_dead and len(dead_path)<9:
                             clstr_pxls = enclosed_points(remaining_pxls, dead_path, alive_direction, rad)
+                            print(">>>clstr_pxls=",clstr_pxls)
+                            print(">>>len(clstr_pxls)=",len(clstr_pxls))
+
+                            # do not label points with no or only one alive circle inside the enclosed path
                             if len(clstr_pxls) == 0:
+                                # disregard an enclosed path found with no alive circles
+                                all_outer_dead = False
+                            elif len(clstr_pxls) == 1:
+                                # do not label points residing in only a single alive circle
+                                all_outer_dead = False
+
                                 # remove from current label, put into label 0 instead
-                                cluster_list["label_" + str(lbl_no)].remove(clstr_pxls)
-                                cluster_list["label_0"].append(clstr_pxls)
-                            #print(">>>clstr_pxls=",clstr_pxls)
-                            all_outer_dead = False
+                                cluster_list["label_0"] += clstr_pxls
+                                for bad in clstr_pxls:
+                                    for inst in cluster_list["label_" + str(lbl_no)]:
+                                        if bad[0]==inst[0] and bad[1]==inst[1]:
+                                            del cluster_list["label_" + str(lbl_no)][inst]
                     #print("\t all_outer_dead=",all_outer_dead)
 
                     # break for loop if enclosed path found: no need to iterate over more alive directions
@@ -295,7 +304,7 @@ def traceObjectsInImage_texture(origImage):
         plt.ylabel("r-b")
         plt.show()
 
-        enc_list = enclosed_points(remaining_pxls, dead_path, alive_direction, rad, method = "delete")
+        enc_list = enclosed_points(remaining_pxls, dead_path, alive_direction, rad)
         if len(enc_list) > 0:
             remaining_pxls.remove(enc_list)
         else:
