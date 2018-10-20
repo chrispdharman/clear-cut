@@ -236,9 +236,11 @@ def traceObjectsInImage_texture(origImage):
 
         # reiterate nucleation until all outer bubbles are dead
         all_outer_dead = False
+        # initiate new alive directions with current list
+        alive = alive_direction.copy()
         while not all_outer_dead:
             # for any outermost bubbles that found new pixels, nucleate another bubble around them
-            for dirs in alive_direction:
+            for dirs in alive:
 
                 # re-nucleates on alive circles that are 2*rad distance away from initial point
                 #if abs(dirs[0]-chosen_one[0])==2*rad or abs(dirs[1]-chosen_one[1])==2*rad:
