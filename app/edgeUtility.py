@@ -271,15 +271,15 @@ def traceObjectsInImage_texture(origImage):
                         edgy_img[ edge[0], edge[1] ] = 1
                     #print("edgy_img=", edgy_img)
 
-                    print("dead_direction=",dead_direction)
-                    print("No. of dead directions =", len(dead_direction))
+                    #print("dead_direction=",dead_direction)
+                    #print("No. of dead directions =", len(dead_direction))
 
                     # multiple (5) attempts at finding a random path within the dead directions
                     attempt = 0
-                    while not all_outer_dead and attempt < 5:
+                    while len(dead_direction) > 0 and not all_outer_dead and attempt < 5:
                         attempt += 1
                         #print("attempt=",attempt)
-                        all_outer_dead, dead_path = randomPathEdgeRace(edgy_img, adj_size = rad, border =brdr, showPath = True)
+                        all_outer_dead, dead_path = randomPathEdgeRace(edgy_img, adj_size = rad, border = brdr, showPath = False)
 
                         # dead_path needs shifting by border in the x- and y-direction
 
