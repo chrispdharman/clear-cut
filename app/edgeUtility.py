@@ -209,10 +209,17 @@ def traceObjectsInImage_texture(origImage):
         lbl_no += 1
         print("Cluster [", lbl_no,"] determination in progress...")
 
+        # check the points in cluster label 1 have been removed
+        if lbl_no == 2:
+            plt.figure()
+            plt.scatter((np.array(orig_remaining_pxls).T)[0], (np.array(orig_remaining_pxls).T)[1], s=1)
+            plt.show()
+
         # setup graph
         fig, ax = plt.subplots(1)
         ax.set_aspect('equal')
-        ax.scatter(textureImage[:, :, 0], textureImage[:, :, 1], s=1)
+        #ax.scatter(textureImage[:, :, 0], textureImage[:, :, 1], s=1)
+        ax.scatter((np.array(orig_remaining_pxls).T)[0], (np.array(orig_remaining_pxls).T)[1], s=1)
 
         # randomly select a pixel coordinate in the existing list
         chosen_one = remaining_pxls[randint(0, len(remaining_pxls))]
