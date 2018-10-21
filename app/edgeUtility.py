@@ -29,10 +29,13 @@ def traceObjectsInImage(origImage, method = "gradient"):
 # count if there are any coordinates surrounding the chosen_one
 def cluster_counter(chosen_one, pxl_list, R = 10):
     coord_list = []
-    for coord in range(0, len(pxl_list)):
-        x, y = pxl_list[coord]
-        if math.sqrt( (x - chosen_one[0])**2 + (y - chosen_one[1])**2 ) <= R:
-            coord_list.append(pxl_list[coord])
+    '''#for coord in range(0, len(pxl_list)):
+    for coord in pxl_list:
+        #x, y = pxl_list[coord]
+        if math.sqrt( (coord[0] - chosen_one[0])**2 + (coord[1] - chosen_one[1])**2 ) <= R:
+            coord_list += coord'''
+    # list comprehension style!
+    coord_list += [coord for coord in pxl_list if math.sqrt( (coord[0] - chosen_one[0])**2 + (coord[1] - chosen_one[1])**2 ) <= R]
     return coord_list
 
 # boolean to check if this is a new direction or not
@@ -229,7 +232,8 @@ def traceObjectsInImage_texture(origImage):
     cluster_list = {
         "label_0" : []
     }
-    rad = 8
+    #rad = 8
+    rad = 5
     lbl_no = 0
     end_counter = 1
     print("No. of remaining pxls (start) = ", len(remaining_pxls))
@@ -292,7 +296,8 @@ def traceObjectsInImage_texture(origImage):
             # for any outermost bubbles that found new pixels, nucleate another bubble around them
             #for dirs in alive_direction:
             idx = -1
-            while idx < len(alive_direction):
+            #while idx < len(alive_direction):
+            while idx < len(alive_direction)-1:
                 idx += 1
                 dirs = alive_direction[idx]
                 print("\t Iteration: ", idx,"/",len(alive_direction))
@@ -306,6 +311,8 @@ def traceObjectsInImage_texture(origImage):
                                                                                cluster_list, border = brdr)
                     # make sure alive directions are not overwritten by dead ones!
                     alive_direction += alive
+                    # remove duplicate entries in dead_path
+                    alive_direction = np.unique(alive_direction, axis=0).tolist()
                     for al in alive_direction:
                         for dd in dead:
                             if al[0] == dd[0] and al[1] == dd[1]:
@@ -320,8 +327,11 @@ def traceObjectsInImage_texture(origImage):
                     #print("No. of dead directions =", len(dead_direction))
 
                     # multiple (5) attempts at finding a random path within the dead directions
-                    attempt = 0
-                    while len(dead) > 0 and not all_outer_dead and attempt < 5:
+                    '''attempt = 0
+
+                    # killed this line as dead may be ==[] and break out
+                    #while len(dead) > 0 and not all_outer_dead and attempt < 5:
+                    while not all_outer_dead and attempt < 5:
                         attempt += 1
                         # populate dead_directions with value 1 in edgy_img (shifted by (+border,+border) )
                         for edge in dead_direction:
@@ -330,6 +340,8 @@ def traceObjectsInImage_texture(origImage):
                         #print("attempt=",attempt)
                         all_outer_dead, dead_path = randomPathEdgeRace(edgy_img, adj_size = rad, border = brdr, showPath = ShowPath)
 
+                        # remove duplicate entries in dead_path
+                        dead_path = np.unique(dead_path, axis = 0).tolist()
                         # dead_path needs shifting by border in the x- and y-direction
                         for i in range(0, len(dead_path)):
                             coor = dead_path[i]
@@ -338,30 +350,33 @@ def traceObjectsInImage_texture(origImage):
                         # if enclosed path is too small, add enclosed pxls to label 0
                         #print("dead_path=", dead_path)
                         #print("len(dead_path)=",len(dead_path))
-                        if all_outer_dead and len(dead_path)<6:
+                        if all_outer_dead and len(dead_path)<15:
                             # do not label points with no or only one alive circle inside the enclosed path
                             all_outer_dead = False
                             clstr_pxls = enclosed_points(remaining_pxls, dead_path, alive_direction, rad)
                             #print(">>>clstr_pxls=",clstr_pxls)
                             #print(">>>len(clstr_pxls)=",len(clstr_pxls))
 
+                            # do not label points residing in only a single alive circle
                             if len(clstr_pxls) == 1:
-                                # do not label points residing in only a single alive circle
-                                all_outer_dead = False
-
+                                bad = clstr_pxls[0]
                                 # remove from current label, put into label 0 instead
-                                cluster_list["label_0"] += clstr_pxls
-                                for bad in clstr_pxls:
-                                    for inst in cluster_list["label_" + str(lbl_no)]:
-                                        if bad[0]==inst[0] and bad[1]==inst[1]:
-                                            del cluster_list["label_" + str(lbl_no)][inst]
-                        if len(dead_path)<6:
-                            all_outer_dead = False
-                    #print("\t all_outer_dead=",all_outer_dead)
+                                cluster_list["label_0"] += bad
+                                #clstr = np.array(cluster_list["label_" + str(lbl_no)])
+                                #print("clstr.shape=",clstr.shape)
+                                #for inst in range(0, len(clstr.shape[0])):
+                                #    print("clstr[inst]=",clstr[inst])
+                                #    if bad[0]==(clstr[inst])[0] and bad[1]==(clstr[inst])[1]:
+                                #        del cluster_list["label_" + str(lbl_no)][inst]
+                                for inst in cluster_list["label_" + str(lbl_no)]:
+                                    if bad[0] == inst[0] and bad[1] == inst[1]:
+                                        cluster_list["label_" + str(lbl_no)].remove(inst)
+
+                    #print("\t all_outer_dead=",all_outer_dead, ", attempt=", attempt)
 
                     # break for loop if enclosed path found: no need to iterate over more alive directions
                     if all_outer_dead:
-                        break
+                        break'''
         # shift back all coordinates in alive_direction, dead_direction and dead_path
         for i in range(0,len(alive_direction)):
             coor = alive_direction[i]
@@ -375,14 +390,10 @@ def traceObjectsInImage_texture(origImage):
             ax.add_patch(Circle((coor[0]-brdr, coor[1]-brdr), rad, facecolor=(0, 0, 0, 0), edgecolor='red'))
         for coor in dead_path:
             # graphics
-            ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor='blue'))
-
-        # plot the (r-g) % difference and (r-b) % difference
-        plt.xlabel("r-g")
-        plt.ylabel("r-b")
-        plt.show()
+            ax.add_patch(Circle((coor[0], coor[1]), rad/10, facecolor=(0, 0, 0, 0), edgecolor='blue'))
 
         enc_list = enclosed_points(remaining_pxls, dead_path, alive_direction, rad)
+        print("enc_list=",enc_list)
         if len(enc_list) > 0:
             for enc in enc_list:
                 y = 0
@@ -398,6 +409,11 @@ def traceObjectsInImage_texture(origImage):
             #remaining_pxls.remove(enc_list)
         else:
             print("No pixels in the path found")
+
+        # plot the (r-g) % difference and (r-b) % difference
+        plt.xlabel("r-g")
+        plt.ylabel("r-b")
+        plt.show()
 
         # update original remaining pixels to remove the pxls that were just labelled
         # repeat cluster finding until remaining_pxls is empty
