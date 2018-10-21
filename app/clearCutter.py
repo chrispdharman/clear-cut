@@ -87,7 +87,8 @@ def main():
 
     # MAKE AS FUNCTION PASSING IN AND RETURNING pdict
     # execute clearCut method and store in edge array for masking
-    edgy_images = traceObjectsInImage(image, method = "texture") # later think about implementing different methods as an argument
+    #edgy_images = traceObjectsInImage(image, method = "texture") # later think about implementing different methods as an argument
+    edgy_images = traceObjectsInImage(image, method= "gradient")
 
     # remove edge pixels that cannot possibly contain an edge (may need to change order with edgeFiller?)
     edgy_images = edgeKiller(edgy_images, objectTolerance = 4)
@@ -110,7 +111,7 @@ def main():
     objNo = 0
     while objNo < 10:
         # run one iteration of random path edge race
-        objBool, objEdgeArray = randomPathEdgeRace(image, edgy_images)
+        objBool, objEdgeArray = randomPathEdgeRace(edgy_images)
 
         if objBool:
             print("An object was found :)")

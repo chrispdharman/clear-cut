@@ -6,6 +6,7 @@ from skimage.measure import block_reduce
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 import math
+import time
 
 # object tracing method handler
 def traceObjectsInImage(origImage, method = "gradient"):
@@ -74,6 +75,9 @@ def enclosed_points(remaining_pxls, dead_path, alive_direction, rad):
 # cluster bubble nucleate building block code
 # randomly select a pixel coordinate in the existing list
 def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, border=0, iter_max = 9, init = False, end_counter = 1):
+    timeIt = False
+    if timeIt:
+        t_0 = time.time()
     print("\t Nucleating...")
     # keep finding points in a clustered region
     iter = 0
@@ -85,6 +89,10 @@ def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, border=0, i
         start_counter = end_counter
         iter = iter + 1
 
+        if timeIt:
+            t_prev = time.time()
+
+        # determine the next direction for this iter
         if iter > 1:
             mult = rad * (1 + (iter - 2) // 8)
             if (iter - 2) % 8 < 4:
@@ -95,6 +103,10 @@ def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, border=0, i
                           (int(round( math.sin((iter-6)*math.pi/2) ))) * mult]
         else:
             dx, dy = [0, 0]
+
+        if timeIt:
+            print("\t \t 1. Determine direction: ",time.time()-t_prev, "seconds")
+            t_prev = time.time()
 
         chsn_one = [point[0] + dy, point[1] + dx]
         #print("iter=",iter,"\t chsn_one=", chsn_one)
@@ -110,6 +122,9 @@ def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, border=0, i
             inc_list = []
         end_counter = start_counter + len(inc_list)
         #print("end_counter = ", end_counter)
+        if timeIt:
+            print("\t \t 2. Counting pixels: ",time.time()-t_prev, "seconds")
+            t_prev = time.time()
 
         ## If the first evaluation does not have a change in counter value, append to the cluster_list["label_0"] list
         if iter == 1 and init:
@@ -138,15 +153,26 @@ def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, border=0, i
         cluster_list["label_" + str(lbl_no)] += inc_list
         #print("After: ", cluster_list["label_" + str(lbl_no)])
 
+        if timeIt:
+            print("\t \t 3. Updating lists/dictionaries: ",time.time()-t_prev, "seconds")
+            t_prev = time.time()
+
         # this might present a problem for post-init determination
-        if not inc_list == []:
-            for coord in range(0, len(inc_list)):
-                remaining_pxls.remove(inc_list[coord])
+        '''if not inc_list == []:
+            #for coord in range(0, len(inc_list)):
+            #    remaining_pxls.remove(inc_list[coord])
+            # See https://stackoverflow.com/questions/21510140/best-way-to-remove-elements-from-a-list
+            remaining_pxls = [c for c in remaining_pxls if c not in inc_list]
+
+        if timeIt:
+            print("\t \t 4. Removing found pixels: ",time.time()-t_prev, "seconds")
+            t_prev = time.time()'''
 
         if iter == iter_max:
             fully_nucleated = True
 
-    return remaining_pxls, cluster_list, alive_direction, dead_direction
+    #return remaining_pxls, cluster_list, alive_direction, dead_direction
+    return cluster_list, alive_direction, dead_direction
 
 # object tracing texture method
 def traceObjectsInImage_texture(origImage):
@@ -203,7 +229,7 @@ def traceObjectsInImage_texture(origImage):
     print("No. of remaining pxls (start) = ", len(remaining_pxls))
     print("cluster_list (start) = ", cluster_list)
     # keep finding clusters until all pxls have been labelled
-    while len(remaining_pxls) > 0:
+    while len(orig_remaining_pxls) > 0:
         alive_direction = []
         dead_direction = []
         lbl_no += 1
@@ -238,8 +264,10 @@ def traceObjectsInImage_texture(origImage):
         print("chosen_one=",chosen_one)
 
         # initial nucleation
-        remaining_pxls, cluster_list, alive, dead = clstr_nucleate(chosen_one, rad, lbl_no, orig_remaining_pxls,
-                                                                   cluster_list, border=brdr, iter_max=17, init=True)
+        #remaining_pxls, cluster_list, alive, dead = clstr_nucleate(chosen_one, rad, lbl_no, orig_remaining_pxls,
+        #                                                           cluster_list, border=brdr, iter_max=17, init=True)
+        cluster_list, alive, dead = clstr_nucleate(chosen_one, rad, lbl_no, orig_remaining_pxls,
+                                                             cluster_list, border=brdr, iter_max=17, init=True)
         alive_direction += alive
         dead_direction += dead
 
@@ -268,7 +296,7 @@ def traceObjectsInImage_texture(origImage):
                 # re-nucleates on alive circles that are 2*rad distance away from initial point
                 if not ((dirs[0] == chosen_one[0]) and (dirs[1] == chosen_one[1])):
                     #print("\t I'm outer alive!: ",dirs, "--> (", abs(dirs[0]-chosen_one[0]),",",abs(dirs[1]-chosen_one[1]))
-                    remaining_pxls, cluster_list, alive, dead = clstr_nucleate(dirs, rad, lbl_no, orig_remaining_pxls,
+                    cluster_list, alive, dead = clstr_nucleate(dirs, rad, lbl_no, orig_remaining_pxls,
                                                                                cluster_list, border = brdr)
                     # make sure alive directions are not overwritten by dead ones!
                     alive_direction += alive
@@ -570,17 +598,16 @@ def img_crop(im, edge = "both"):
 def edgePxlPos(edge_img, border = 0):
     pos_vec = []
     shape = edge_img.shape
-    print("Edge shape=",shape)
-    print("edge_img=",edge_img)
-    #for i in range(border,shape[0]-border):
-    #    for j in range(border,shape[1]-border):
+    #print("Edge shape=",shape)
+    #print("edge_img=",edge_img)
     for i in range(0,shape[0]):
         for j in range(0,shape[1]):
             if edge_img[i,j] > 0.:
+                #print("edge_img[i,j]=",edge_img[i,j])
                 pos_vec.append([i,j])
     pos_vec = np.array(pos_vec)
-    print("Array: ",pos_vec)
-    print("Shape: ",pos_vec.shape)
+    #print("Array: ",pos_vec)
+    #print("Shape: ",pos_vec.shape)
     return pos_vec
 
 # return pxl at perimeter if you go out of bounds
@@ -939,6 +966,7 @@ def randomPathEdgeRace(edgy_img, adj_size = 1, border = 0, showPath = False):
                 graph_img[start_line[i, 0], start_line[i, 1]] = 2.0
             graph_img[new_pxl[0], new_pxl[1]] = 2.25
 
+            print("[Display plot, pause code]")
             plt.figure()
             plt.imshow(graph_img[protPxl(new_pxl[0] - 49, graph_img.shape[0]):protPxl(new_pxl[0] + 50, graph_img.shape[0]),
                        protPxl(new_pxl[1] - 49, graph_img.shape[1]):protPxl(new_pxl[1] + 50, graph_img.shape[1])])
