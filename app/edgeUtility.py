@@ -323,7 +323,7 @@ def traceObjectsInImage_texture(origImage):
                     attempt = 0
                     while len(dead) > 0 and not all_outer_dead and attempt < 5:
                         attempt += 1
-                        # populate dead_directions with value 1 in edgy_img
+                        # populate dead_directions with value 1 in edgy_img (shifted by (+border,+border) )
                         for edge in dead_direction:
                             edgy_img[edge[0], edge[1]] = 1
 
@@ -331,18 +331,21 @@ def traceObjectsInImage_texture(origImage):
                         all_outer_dead, dead_path = randomPathEdgeRace(edgy_img, adj_size = rad, border = brdr, showPath = ShowPath)
 
                         # dead_path needs shifting by border in the x- and y-direction
+                        for i in range(0, len(dead_path)):
+                            coor = dead_path[i]
+                            dead_path[i] = [coor[0] - brdr, coor[1] - brdr]
 
                         # if enclosed path is too small, add enclosed pxls to label 0
-                        if all_outer_dead and len(dead_path)<9:
+                        #print("dead_path=", dead_path)
+                        #print("len(dead_path)=",len(dead_path))
+                        if all_outer_dead and len(dead_path)<6:
+                            # do not label points with no or only one alive circle inside the enclosed path
+                            all_outer_dead = False
                             clstr_pxls = enclosed_points(remaining_pxls, dead_path, alive_direction, rad)
                             #print(">>>clstr_pxls=",clstr_pxls)
                             #print(">>>len(clstr_pxls)=",len(clstr_pxls))
 
-                            # do not label points with no or only one alive circle inside the enclosed path
-                            if len(clstr_pxls) == 0:
-                                # disregard an enclosed path found with no alive circles
-                                all_outer_dead = False
-                            elif len(clstr_pxls) == 1:
+                            if len(clstr_pxls) == 1:
                                 # do not label points residing in only a single alive circle
                                 all_outer_dead = False
 
@@ -352,26 +355,27 @@ def traceObjectsInImage_texture(origImage):
                                     for inst in cluster_list["label_" + str(lbl_no)]:
                                         if bad[0]==inst[0] and bad[1]==inst[1]:
                                             del cluster_list["label_" + str(lbl_no)][inst]
+                        if len(dead_path)<6:
+                            all_outer_dead = False
                     #print("\t all_outer_dead=",all_outer_dead)
 
                     # break for loop if enclosed path found: no need to iterate over more alive directions
                     if all_outer_dead:
                         break
         # shift back all coordinates in alive_direction, dead_direction and dead_path
-
-        # graphics
         for i in range(0,len(alive_direction)):
             coor = alive_direction[i]
             alive_direction[i] = [coor[0]-brdr, coor[1]-brdr]
+            # graphics
             ax.add_patch(Circle((coor[0]-brdr, coor[1]-brdr), rad, facecolor=(0, 0, 0, 0), edgecolor='green'))
         for i in range(0, len(dead_direction)):
             coor = dead_direction[i]
             dead_direction[i] = [coor[0] - brdr, coor[1] - brdr]
+            # graphics
             ax.add_patch(Circle((coor[0]-brdr, coor[1]-brdr), rad, facecolor=(0, 0, 0, 0), edgecolor='red'))
-        for i in range(0, len(dead_path)):
-            coor = dead_path[i]
-            dead_path[i] = [coor[0] - brdr, coor[1] - brdr]
-            ax.add_patch(Circle((coor[0]-brdr, coor[1]-brdr), rad, facecolor=(0, 0, 0, 0), edgecolor='blue'))
+        for coor in dead_path:
+            # graphics
+            ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor='blue'))
 
         # plot the (r-g) % difference and (r-b) % difference
         plt.xlabel("r-g")
