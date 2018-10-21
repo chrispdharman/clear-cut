@@ -73,7 +73,7 @@ def enclosed_points(remaining_pxls, dead_path, alive_direction, rad):
 
 # cluster bubble nucleate building block code
 # randomly select a pixel coordinate in the existing list
-def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, iter_max = 9, init = False, end_counter = 1):
+def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, border=0, iter_max = 9, init = False, end_counter = 1):
     print("\t Nucleating...")
     # keep finding points in a clustered region
     iter = 0
@@ -128,9 +128,9 @@ def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, iter_max = 
                 print("Continue in this direction")'''
 
         if end_counter == start_counter:
-            dead_direction.append(chsn_one)
+            dead_direction.append([chsn_one[0]+border, chsn_one[1]+border])
         else:
-            alive_direction.append(chsn_one)
+            alive_direction.append([chsn_one[0]+border, chsn_one[1]+border])
 
         # append inc_list to current cluster list
         #print("Before: ",cluster_list["label_" + str(lbl_no)])
@@ -221,15 +221,31 @@ def traceObjectsInImage_texture(origImage):
         #ax.scatter(textureImage[:, :, 0], textureImage[:, :, 1], s=1)
         ax.scatter((np.array(orig_remaining_pxls).T)[0], (np.array(orig_remaining_pxls).T)[1], s=1)
 
+        # put a criteria here to set all_outer_dead = True if all outer bubbles are dead...
+        # edgy_img = np.zeros((255, 255))
+        brdr = 2 * rad
+        edgy_img = np.zeros((255 + 2 * brdr, 255 + 2 * brdr))
+        for u in range(0, edgy_img.shape[0]):
+            for v in range(0, edgy_img.shape[1]):
+                # make a border around the image so that it does not go out of bounds?
+                if u < brdr or v < brdr or u > 255 + brdr or v > 255 + brdr:
+                    edgy_img[u, v] = -0.1
+
         # randomly select a pixel coordinate in the existing list
         chosen_one = remaining_pxls[randint(0, len(remaining_pxls))]
-        #chosen_one = [255//2, 255//2]
+        chosen_one = [255//2, 255//2]
+        chosen_one = [0, 2]
         print("chosen_one=",chosen_one)
 
         # initial nucleation
-        remaining_pxls, cluster_list, alive, dead = clstr_nucleate(chosen_one, rad, lbl_no, orig_remaining_pxls, cluster_list, iter_max = 17, init = True)
+        remaining_pxls, cluster_list, alive, dead = clstr_nucleate(chosen_one, rad, lbl_no, orig_remaining_pxls,
+                                                                   cluster_list, border=brdr, iter_max=17, init=True)
         alive_direction += alive
         dead_direction += dead
+
+        # populate dead_directions with value 1 in edgy_img
+        for edge in dead_direction:
+            edgy_img[edge[0], edge[1]] = 1
 
         #print("\t alive_direction=", alive_direction)
         #print("\t dead_direction=", dead_direction)
@@ -240,8 +256,12 @@ def traceObjectsInImage_texture(origImage):
         alive = alive_direction.copy()
         while not all_outer_dead:
             # for any outermost bubbles that found new pixels, nucleate another bubble around them
-            for dirs in alive:
-
+            #for dirs in alive_direction:
+            idx = -1
+            while idx < len(alive_direction):
+                idx += 1
+                dirs = alive_direction[idx]
+                print("\t Iteration: ", idx,"/",len(alive_direction))
                 # re-nucleates on alive circles that are 2*rad distance away from initial point
                 #if abs(dirs[0]-chosen_one[0])==2*rad or abs(dirs[1]-chosen_one[1])==2*rad:
 
@@ -249,7 +269,7 @@ def traceObjectsInImage_texture(origImage):
                 if not ((dirs[0] == chosen_one[0]) and (dirs[1] == chosen_one[1])):
                     #print("\t I'm outer alive!: ",dirs, "--> (", abs(dirs[0]-chosen_one[0]),",",abs(dirs[1]-chosen_one[1]))
                     remaining_pxls, cluster_list, alive, dead = clstr_nucleate(dirs, rad, lbl_no, orig_remaining_pxls,
-                                                                               cluster_list)
+                                                                               cluster_list, border = brdr)
                     # make sure alive directions are not overwritten by dead ones!
                     alive_direction += alive
                     for al in alive_direction:
@@ -260,36 +280,28 @@ def traceObjectsInImage_texture(origImage):
                     #print("\t alive_direction=", alive_direction)
                     #print("\t dead_direction=", dead_direction)
 
-                    # put a criteria here to set all_outer_dead = True if all outer bubbles are dead...
-                    #edgy_img = np.zeros((255, 255))
-                    brdr = 2*rad
-                    edgy_img = np.zeros((255+2*brdr, 255+2*brdr))
-                    for u in range(0, edgy_img.shape[0]):
-                        for v in range(0, edgy_img.shape[1]):
-                            # make a border around the image so that it does not go out of bounds?
-                            if u < brdr or v < brdr or u > 255 + brdr or v > 255 + brdr:
-                                edgy_img[u, v] = -0.1
-                    for edge in dead_direction:
-                        edgy_img[ edge[0], edge[1] ] = 1
-                    #print("edgy_img=", edgy_img)
 
                     #print("dead_direction=",dead_direction)
                     #print("No. of dead directions =", len(dead_direction))
 
                     # multiple (5) attempts at finding a random path within the dead directions
                     attempt = 0
-                    while len(dead_direction) > 0 and not all_outer_dead and attempt < 5:
+                    while len(dead) > 0 and not all_outer_dead and attempt < 5:
                         attempt += 1
+                        # populate dead_directions with value 1 in edgy_img
+                        for edge in dead_direction:
+                            edgy_img[edge[0], edge[1]] = 1
+
                         #print("attempt=",attempt)
-                        all_outer_dead, dead_path = randomPathEdgeRace(edgy_img, adj_size = rad, border = brdr, showPath = False)
+                        all_outer_dead, dead_path = randomPathEdgeRace(edgy_img, adj_size = rad, border = brdr, showPath = True)
 
                         # dead_path needs shifting by border in the x- and y-direction
 
                         # if enclosed path is too small, add enclosed pxls to label 0
                         if all_outer_dead and len(dead_path)<9:
                             clstr_pxls = enclosed_points(remaining_pxls, dead_path, alive_direction, rad)
-                            print(">>>clstr_pxls=",clstr_pxls)
-                            print(">>>len(clstr_pxls)=",len(clstr_pxls))
+                            #print(">>>clstr_pxls=",clstr_pxls)
+                            #print(">>>len(clstr_pxls)=",len(clstr_pxls))
 
                             # do not label points with no or only one alive circle inside the enclosed path
                             if len(clstr_pxls) == 0:
@@ -558,15 +570,17 @@ def img_crop(im, edge = "both"):
 def edgePxlPos(edge_img, border = 0):
     pos_vec = []
     shape = edge_img.shape
-    #print("Edge shape=",shape)
-    #print("edge_img=",edge_img)
-    for i in range(border,shape[0]-border):
-        for j in range(border,shape[1]-border):
+    print("Edge shape=",shape)
+    print("edge_img=",edge_img)
+    #for i in range(border,shape[0]-border):
+    #    for j in range(border,shape[1]-border):
+    for i in range(0,shape[0]):
+        for j in range(0,shape[1]):
             if edge_img[i,j] > 0.:
                 pos_vec.append([i,j])
     pos_vec = np.array(pos_vec)
-    #print("Array: ",pos_vec)
-    #print("Shape: ",pos_vec.shape)
+    print("Array: ",pos_vec)
+    print("Shape: ",pos_vec.shape)
     return pos_vec
 
 # return pxl at perimeter if you go out of bounds
@@ -840,8 +854,10 @@ def random_step_direction(edgy_img, new_pxl, start_line, prev_path_vec, adj_size
 # adj_size details how far an "adjacent" pixel is considered
 def randomPathEdgeRace(edgy_img, adj_size = 1, border = 0, showPath = False):
     # update the edge pixel position list
+    #print("len(edgy_img>0)=", len(edgy_img > 0))
     posList = edgePxlPos(edgy_img, border = border)
-    #print("posList=",posList)
+    #print("posList=", posList)
+
     if showPath:
         graph_img = np.copy(edgy_img)
 
@@ -926,6 +942,7 @@ def randomPathEdgeRace(edgy_img, adj_size = 1, border = 0, showPath = False):
             plt.figure()
             plt.imshow(graph_img[protPxl(new_pxl[0] - 49, graph_img.shape[0]):protPxl(new_pxl[0] + 50, graph_img.shape[0]),
                        protPxl(new_pxl[1] - 49, graph_img.shape[1]):protPxl(new_pxl[1] + 50, graph_img.shape[1])])
+            #plt.imshow(graph_img)
             plt.show()
 
         # determine previous path_vec
