@@ -11,7 +11,9 @@ import time
 
 # quick access to debug output
 ShowPath = False
+TimeCluster = False
 TimeNucleation = False
+TimeCounter = False
 DebugStepPath = False
 
 # object tracing method handler
@@ -29,13 +31,18 @@ def traceObjectsInImage(origImage, method = "gradient"):
 # count if there are any coordinates surrounding the chosen_one
 def cluster_counter(chosen_one, pxl_list, R = 10):
     coord_list = []
-    '''#for coord in range(0, len(pxl_list)):
-    for coord in pxl_list:
+    timeIt = TimeCounter
+    if timeIt:
+        t_prev = time.time()
+    #for coord in range(0, len(pxl_list)):
+    '''for coord in pxl_list:
         #x, y = pxl_list[coord]
         if math.sqrt( (coord[0] - chosen_one[0])**2 + (coord[1] - chosen_one[1])**2 ) <= R:
             coord_list += coord'''
     # list comprehension style!
     coord_list += [coord for coord in pxl_list if math.sqrt( (coord[0] - chosen_one[0])**2 + (coord[1] - chosen_one[1])**2 ) <= R]
+    if timeIt:
+        print("\t \t Counting pixels: ", time.time() - t_prev, "seconds")
     return coord_list
 
 # boolean to check if this is a new direction or not
@@ -124,6 +131,11 @@ def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, border=0, i
         ## count number of pixels in radius "R" pxls around it, add these to the new cluster list.
         # make sure you don't re-evaluate a previous circle
         new_dir_bool = new_direction(chsn_one, dead_direction + alive_direction)
+
+        if timeIt:
+            print("\t \t 1.1 Determine new direction: ",time.time()-t_prev, "seconds")
+            t_prev = time.time()
+
         if new_dir_bool:
             inc_list = cluster_counter(chsn_one, remaining_pxls, R = rad)
         else:
@@ -185,6 +197,7 @@ def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, border=0, i
 
 # object tracing texture method
 def traceObjectsInImage_texture(origImage):
+    timeIt = TimeCluster
     # gradImage: create numpy 2D array of size (2n-1) of the original
     dimY, dimX, chanls = origImage.shape
 
@@ -197,6 +210,8 @@ def traceObjectsInImage_texture(origImage):
     #fig = plt.figure()
     # ax = fig.add_subplot(111, projection='3d')
 
+    if timeIt:
+        t_prev = time.time()
     # loop over each dimension, populating the textureImage with various labels
     remaining_pxls = []
     for j in range(0, dimY):
@@ -217,6 +232,10 @@ def traceObjectsInImage_texture(origImage):
             #new_pt = textureImage[j, i]
             #ax.scatter(new_pt[0], new_pt[1], new_pt[2])
 
+    if timeIt:
+        print("\t \t 1. Populate textureImage: ", time.time() - t_prev, "seconds")
+        t_prev = time.time()
+
     # plot the (r-g) % difference and (r-b) % difference
     #plt.figure()
     #plt.scatter(textureImage[:,:,0], textureImage[:,:,1])
@@ -232,7 +251,7 @@ def traceObjectsInImage_texture(origImage):
     cluster_list = {
         "label_0" : []
     }
-    #rad = 8
+    #rad = 6
     rad = 5
     lbl_no = 0
     end_counter = 1
@@ -251,11 +270,16 @@ def traceObjectsInImage_texture(origImage):
             plt.scatter((np.array(orig_remaining_pxls).T)[0], (np.array(orig_remaining_pxls).T)[1], s=1)
             plt.show()
 
+        if timeIt:
+            t_prev = time.time()
         # setup graph
         fig, ax = plt.subplots(1)
         ax.set_aspect('equal')
         #ax.scatter(textureImage[:, :, 0], textureImage[:, :, 1], s=1)
         ax.scatter((np.array(orig_remaining_pxls).T)[0], (np.array(orig_remaining_pxls).T)[1], s=1)
+        if timeIt:
+            print("\t \t 2. Configure graph: ", time.time() - t_prev, "seconds")
+            t_prev = time.time()
 
         # put a criteria here to set all_outer_dead = True if all outer bubbles are dead...
         # edgy_img = np.zeros((255, 255))
@@ -269,8 +293,10 @@ def traceObjectsInImage_texture(origImage):
 
         # randomly select a pixel coordinate in the existing list
         chosen_one = remaining_pxls[randint(0, len(remaining_pxls))]
-        #chosen_one = [255//2, 255//2]
-        chosen_one = [0, 2]
+        chosen_one = [255 // 2, 255 // 2]
+        chosen_one = [245, 0]
+        chosen_one = [0, 245]
+        #chosen_one = [0, 2]
         print("chosen_one=",chosen_one)
 
         # initial nucleation
@@ -280,6 +306,10 @@ def traceObjectsInImage_texture(origImage):
         #                                                     cluster_list, border=brdr, iter_max=17, init=True)
         cluster_list, alive, dead = clstr_nucleate(chosen_one, rad, lbl_no, orig_remaining_pxls,
                                                    cluster_list, iter_max=17, init=True)
+        if timeIt:
+            print("\t \t 3. Cluster nucleate...: ", time.time() - t_prev, "seconds")
+            t_prev = time.time()
+
         alive_direction += alive
         dead_direction += dead
 
@@ -309,10 +339,15 @@ def traceObjectsInImage_texture(origImage):
 
             # re-nucleates on alive circles that are 2*rad distance away from initial point
             if not ((dirs[0] == chosen_one[0]) and (dirs[1] == chosen_one[1])):
+                if timeIt:
+                    t_prev = time.time()
                 #print("\t I'm outer alive!: ",dirs, "--> (", abs(dirs[0]-chosen_one[0]),",",abs(dirs[1]-chosen_one[1]))
                 #cluster_list, alive, dead = clstr_nucleate(dirs, rad, lbl_no, orig_remaining_pxls,
                 #                                                           cluster_list, border = brdr)
                 cluster_list, alive, dead = clstr_nucleate(dirs, rad, lbl_no, orig_remaining_pxls, cluster_list)
+                if timeIt:
+                    print("\t \t 3. Cluster nucleate...: ", time.time() - t_prev, "seconds")
+                    t_prev = time.time()
 
                 # remove entries in alive that are already in alive_direction
                 for item in alive_direction:
@@ -321,6 +356,9 @@ def traceObjectsInImage_texture(origImage):
                     for curr in alive:
                         if item[0]==curr[0] and item[1]==curr[1]:
                             alive.remove(curr)
+                if timeIt:
+                    print("\t \t 4. Remove alive_direction duplicates: ", time.time() - t_prev, "seconds")
+                    t_prev = time.time()
 
                 # make sure alive directions are not overwritten by dead ones!
                 alive_direction += alive
@@ -336,7 +374,9 @@ def traceObjectsInImage_texture(origImage):
                 dead_direction += dead
                 #print("\t alive_direction=", alive_direction)
                 #print("\t dead_direction=", dead_direction)
-
+                if timeIt:
+                    print("\t \t 5. Remove dead directions in alive_direction: ", time.time() - t_prev, "seconds")
+                    t_prev = time.time()
 
                 #print("dead_direction=",dead_direction)
                 #print("No. of dead directions =", len(dead_direction))
