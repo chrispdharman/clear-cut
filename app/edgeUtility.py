@@ -299,6 +299,7 @@ def traceObjectsInImage_texture(origImage):
         chosen_one = [245, 0]   # test case 2
         chosen_one = [0, 245]   # test case 3
         chosen_one = [0, 2]     # test case 4
+        chosen_one = [250, 250]     # test case 5
         print("chosen_one=",chosen_one)
 
         # initial nucleation
