@@ -87,8 +87,8 @@ def main():
 
     # MAKE AS FUNCTION PASSING IN AND RETURNING pdict
     # execute clearCut method and store in edge array for masking
-    #edgy_images = traceObjectsInImage(image, method = "texture") # later think about implementing different methods as an argument
-    edgy_images = traceObjectsInImage(image, method= "gradient")
+    edgy_images = traceObjectsInImage(image, method = "texture") # later think about implementing different methods as an argument
+    #edgy_images = traceObjectsInImage(image, method= "gradient")
 
     # remove edge pixels that cannot possibly contain an edge (may need to change order with edgeFiller?)
     edgy_images = edgeKiller(edgy_images, objectTolerance = 4)

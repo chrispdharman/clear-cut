@@ -8,6 +8,12 @@ from matplotlib.patches import Circle
 import math
 import time
 
+
+# quick access to debug output
+ShowPath = False
+TimeNucleation = False
+DebugStepPath = False
+
 # object tracing method handler
 def traceObjectsInImage(origImage, method = "gradient"):
     if method == "gradient":
@@ -75,7 +81,7 @@ def enclosed_points(remaining_pxls, dead_path, alive_direction, rad):
 # cluster bubble nucleate building block code
 # randomly select a pixel coordinate in the existing list
 def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, border=0, iter_max = 9, init = False, end_counter = 1):
-    timeIt = False
+    timeIt = TimeNucleation
     if timeIt:
         t_0 = time.time()
     print("\t Nucleating...")
@@ -260,7 +266,7 @@ def traceObjectsInImage_texture(origImage):
         # randomly select a pixel coordinate in the existing list
         chosen_one = remaining_pxls[randint(0, len(remaining_pxls))]
         chosen_one = [255//2, 255//2]
-        chosen_one = [0, 2]
+        #chosen_one = [0, 2]
         print("chosen_one=",chosen_one)
 
         # initial nucleation
@@ -304,6 +310,7 @@ def traceObjectsInImage_texture(origImage):
                         for dd in dead:
                             if al[0] == dd[0] and al[1] == dd[1]:
                                 dead.remove(dd)
+                                #del dead[dd]
                     dead_direction += dead
                     #print("\t alive_direction=", alive_direction)
                     #print("\t dead_direction=", dead_direction)
@@ -321,7 +328,7 @@ def traceObjectsInImage_texture(origImage):
                             edgy_img[edge[0], edge[1]] = 1
 
                         #print("attempt=",attempt)
-                        all_outer_dead, dead_path = randomPathEdgeRace(edgy_img, adj_size = rad, border = brdr, showPath = True)
+                        all_outer_dead, dead_path = randomPathEdgeRace(edgy_img, adj_size = rad, border = brdr, showPath = ShowPath)
 
                         # dead_path needs shifting by border in the x- and y-direction
 
@@ -350,14 +357,21 @@ def traceObjectsInImage_texture(origImage):
                     # break for loop if enclosed path found: no need to iterate over more alive directions
                     if all_outer_dead:
                         break
+        # shift back all coordinates in alive_direction, dead_direction and dead_path
 
         # graphics
-        for coor in alive_direction:
-            ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor='green'))
-        for coor in dead_direction:
-            ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor='red'))
-        for coor in dead_path:
-            ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor='blue'))
+        for i in range(0,len(alive_direction)):
+            coor = alive_direction[i]
+            alive_direction[i] = [coor[0]-brdr, coor[1]-brdr]
+            ax.add_patch(Circle((coor[0]-brdr, coor[1]-brdr), rad, facecolor=(0, 0, 0, 0), edgecolor='green'))
+        for i in range(0, len(dead_direction)):
+            coor = dead_direction[i]
+            dead_direction[i] = [coor[0] - brdr, coor[1] - brdr]
+            ax.add_patch(Circle((coor[0]-brdr, coor[1]-brdr), rad, facecolor=(0, 0, 0, 0), edgecolor='red'))
+        for i in range(0, len(dead_path)):
+            coor = dead_path[i]
+            dead_path[i] = [coor[0] - brdr, coor[1] - brdr]
+            ax.add_patch(Circle((coor[0]-brdr, coor[1]-brdr), rad, facecolor=(0, 0, 0, 0), edgecolor='blue'))
 
         # plot the (r-g) % difference and (r-b) % difference
         plt.xlabel("r-g")
@@ -366,7 +380,18 @@ def traceObjectsInImage_texture(origImage):
 
         enc_list = enclosed_points(remaining_pxls, dead_path, alive_direction, rad)
         if len(enc_list) > 0:
-            remaining_pxls.remove(enc_list)
+            for enc in enc_list:
+                y = 0
+                # iterate through the list which may have indices removed!
+                while y < len(remaining_pxls):
+                    item = remaining_pxls[y]
+                    if enc[0]==item[0] and enc[1]==item[1]:
+                        # if the coordinate in enc_list is found in remaining_pxls, remove it
+                        del remaining_pxls[y]
+                    else:
+                        # otherwise move to the next index in remaining_pxls
+                        y += 1
+            #remaining_pxls.remove(enc_list)
         else:
             print("No pixels in the path found")
 
@@ -922,7 +947,7 @@ def randomPathEdgeRace(edgy_img, adj_size = 1, border = 0, showPath = False):
         #print("start_line=",start_line)
 
         # pick a semi-random direction, roughly orthogonal to the start line and return the path
-        step_path = random_step_direction(edgy_img, new_pxl, start_line, path_vec, adj_size, step_dist = len(start_line)+1, debug = False)
+        step_path = random_step_direction(edgy_img, new_pxl, start_line, path_vec, adj_size, step_dist = len(start_line)+1, debug = DebugStepPath)
         #print("step_path: ", np.array(step_path))
 
         if len(step_path) < 1:
@@ -965,8 +990,13 @@ def randomPathEdgeRace(edgy_img, adj_size = 1, border = 0, showPath = False):
             for i in range(0, len(start_line)):
                 graph_img[start_line[i, 0], start_line[i, 1]] = 2.0
             graph_img[new_pxl[0], new_pxl[1]] = 2.25
+            #print("step_path=",step_path)
+            #print("start_line=", start_line)
+            #print("new_pxl=",new_pxl)
 
-            print("[Display plot, pause code]")
+            print("\t \t [Display plot, pause code]")
+            if new_pxl[0]<0 or new_pxl[0]>graph_img.shape[0] or new_pxl[1]<0 or new_pxl[1]>graph_img.shape[1]:
+                print("\t \t \t >[new_pxl=",new_pxl," out of scope. Bad graph]")
             plt.figure()
             plt.imshow(graph_img[protPxl(new_pxl[0] - 49, graph_img.shape[0]):protPxl(new_pxl[0] + 50, graph_img.shape[0]),
                        protPxl(new_pxl[1] - 49, graph_img.shape[1]):protPxl(new_pxl[1] + 50, graph_img.shape[1])])
