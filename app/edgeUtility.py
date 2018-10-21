@@ -29,6 +29,8 @@ def traceObjectsInImage(origImage, method = "gradient"):
         exit()
 
 # count if there are any coordinates surrounding the chosen_one
+### BOTTLENECK IN THE CLUSTER ALGORITHM
+# Can this be reduced to less than 0.63 seconds?
 def cluster_counter(chosen_one, pxl_list, R = 10):
     coord_list = []
     timeIt = TimeCounter
