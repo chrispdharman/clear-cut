@@ -295,10 +295,10 @@ def traceObjectsInImage_texture(origImage):
 
         # randomly select a pixel coordinate in the existing list
         chosen_one = remaining_pxls[randint(0, len(remaining_pxls))]
-        chosen_one = [255 // 2, 255 // 2]
-        chosen_one = [245, 0]
-        chosen_one = [0, 245]
-        #chosen_one = [0, 2]
+        chosen_one = [255 // 2, 255 // 2]   # test case 1
+        chosen_one = [245, 0]   # test case 2
+        chosen_one = [0, 245]   # test case 3
+        chosen_one = [0, 2]     # test case 4
         print("chosen_one=",chosen_one)
 
         # initial nucleation
