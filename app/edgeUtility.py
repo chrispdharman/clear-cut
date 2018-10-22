@@ -31,18 +31,21 @@ def traceObjectsInImage(origImage, method = "gradient"):
 # count if there are any coordinates surrounding the chosen_one
 ### BOTTLENECK IN THE CLUSTER ALGORITHM
 # Can this be reduced to less than 0.63 seconds?
-def cluster_counter(chosen_one, pxl_list, R = 10):
+def cluster_counter(chosen_one, pxl_list, R = 10, return_count = False):
     coord_list = []
     timeIt = TimeCounter
     if timeIt:
         t_prev = time.time()
     #for coord in range(0, len(pxl_list)):
-    '''for coord in pxl_list:
-        #x, y = pxl_list[coord]
-        if math.sqrt( (coord[0] - chosen_one[0])**2 + (coord[1] - chosen_one[1])**2 ) <= R:
-            coord_list += coord'''
-    # list comprehension style!
-    coord_list += [coord for coord in pxl_list if math.sqrt( (coord[0] - chosen_one[0])**2 + (coord[1] - chosen_one[1])**2 ) <= R]
+    ''''''
+    if return_count:
+        # list comprehension style!
+        coord_list += [coord for coord in pxl_list if math.sqrt( (coord[0] - chosen_one[0])**2 + (coord[1] - chosen_one[1])**2 ) <= R]
+    else:
+        for coord in pxl_list:
+            # x, y = pxl_list[coord]
+            if math.sqrt((coord[0] - chosen_one[0]) ** 2 + (coord[1] - chosen_one[1]) ** 2) <= R:
+                return coord
     if timeIt:
         print("\t \t Counting pixels: ", time.time() - t_prev, "seconds")
     return coord_list
@@ -86,7 +89,7 @@ def enclosed_points(remaining_pxls, dead_path, alive_direction, rad):
             for cood in alive_direction:
                 if cood[0]==y0 and cood[1]==x0:
                     #print(">>cood=", cood, " y0=", y0, " x0=", x0)
-                    enc_list += cluster_counter(cood, remaining_pxls, R=rad)
+                    enc_list += cluster_counter(cood, remaining_pxls, R=rad, return_count=True)
     #print("enc_list=",enc_list)
     return enc_list
 
@@ -173,8 +176,10 @@ def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, border=0, i
         # append inc_list to current cluster list
         #print("Before: ",cluster_list["label_" + str(lbl_no)])
         #print("--Add inc_list=",inc_list)
-        cluster_list["label_" + str(lbl_no)] += inc_list
         #print("After: ", cluster_list["label_" + str(lbl_no)])
+
+        # update dictionary after cluster algorithm completes
+        # cluster_list["label_" + str(lbl_no)] += inc_list
 
         if timeIt:
             print("\t \t 3. Updating lists/dictionaries: ",time.time()-t_prev, "seconds")
@@ -296,10 +301,10 @@ def traceObjectsInImage_texture(origImage):
         # randomly select a pixel coordinate in the existing list
         chosen_one = remaining_pxls[randint(0, len(remaining_pxls))]
         chosen_one = [255 // 2, 255 // 2]   # test case 1
-        chosen_one = [245, 0]   # test case 2
-        chosen_one = [0, 245]   # test case 3
-        chosen_one = [0, 2]     # test case 4
-        chosen_one = [250, 250]     # test case 5
+        #chosen_one = [245, 0]   # test case 2
+        #chosen_one = [0, 245]   # test case 3
+        #chosen_one = [0, 2]     # test case 4
+        #chosen_one = [250, 250]     # test case 5
         print("chosen_one=",chosen_one)
 
         # initial nucleation
@@ -464,6 +469,7 @@ def traceObjectsInImage_texture(origImage):
         exit()
 
         enc_list = enclosed_points(remaining_pxls, dead_path, alive_direction, rad)
+        cluster_list["label_"+str(lbl_no)] += enc_list
         print("enc_list=",enc_list)
         if len(enc_list) > 0:
             for enc in enc_list:
