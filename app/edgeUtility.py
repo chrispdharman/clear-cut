@@ -469,9 +469,8 @@ def traceObjectsInImage_texture(origImage):
         plt.xlabel("r-g")
         plt.ylabel("r-b")
         plt.show()
-        exit()
 
-        enc_list = enclosed_points(remaining_pxls, dead_path, alive_direction, rad)
+        enc_list = enclosed_points(remaining_pxls, dead_direction, alive_direction, rad)
         cluster_list["label_"+str(lbl_no)] += enc_list
         print("enc_list=",enc_list)
         if len(enc_list) > 0:
