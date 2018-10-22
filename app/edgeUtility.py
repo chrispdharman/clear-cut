@@ -13,7 +13,7 @@ import time
 ShowPath = False
 TimeCluster = False
 TimeNucleation = False
-TimeCounter = False
+TimeCounter = True
 DebugStepPath = False
 
 # object tracing method handler
@@ -37,17 +37,21 @@ def cluster_counter(chosen_one, pxl_list, R = 10, return_count = False):
     if timeIt:
         t_prev = time.time()
     #for coord in range(0, len(pxl_list)):
-    ''''''
     if return_count:
         # list comprehension style!
         coord_list += [coord for coord in pxl_list if math.sqrt( (coord[0] - chosen_one[0])**2 + (coord[1] - chosen_one[1])**2 ) <= R]
     else:
-        for coord in pxl_list:
-            # x, y = pxl_list[coord]
-            if math.sqrt((coord[0] - chosen_one[0]) ** 2 + (coord[1] - chosen_one[1]) ** 2) <= R:
-                return coord
+        k = 0
+        # go through all pxl_list
+        while k < len(pxl_list):
+            x, y = pxl_list[k]
+            #  return the coordinate if at least one pxl is found
+            if math.sqrt((x - chosen_one[0]) ** 2 + (y - chosen_one[1]) ** 2) <= R:
+                return [x, y]
+            else:
+                k += 1
     if timeIt:
-        print("\t \t Counting pixels: ", time.time() - t_prev, "seconds")
+        print("\t \t Counting pixels (return_count=",return_count,"): ", time.time() - t_prev, "seconds")
     return coord_list
 
 # boolean to check if this is a new direction or not
@@ -155,7 +159,6 @@ def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, border=0, i
         ## If the first evaluation does not have a change in counter value, append to the cluster_list["label_0"] list
         if iter == 1 and init:
             if end_counter == start_counter:
-                cluster_list["label_0"] += inc_list
                 fully_nucleated = True
             else:
                 cluster_list["label_" + str(lbl_no)] = []
