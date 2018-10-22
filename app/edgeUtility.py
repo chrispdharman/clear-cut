@@ -13,7 +13,7 @@ import time
 ShowPath = False
 TimeCluster = False
 TimeNucleation = False
-TimeCounter = True
+TimeCounter = False
 DebugStepPath = False
 
 # object tracing method handler
@@ -275,10 +275,10 @@ def traceObjectsInImage_texture(origImage):
         print("Cluster [", lbl_no,"] determination in progress...")
 
         # check the points in cluster label 1 have been removed
-        if lbl_no == 2:
+        '''if lbl_no == 2:
             plt.figure()
             plt.scatter((np.array(orig_remaining_pxls).T)[0], (np.array(orig_remaining_pxls).T)[1], s=1)
-            plt.show()
+            plt.show()'''
 
         if timeIt:
             t_prev = time.time()
@@ -308,7 +308,7 @@ def traceObjectsInImage_texture(origImage):
         #chosen_one = [0, 245]   # test case 3
         #chosen_one = [0, 2]     # test case 4
         #chosen_one = [250, 250]     # test case 5
-        print("chosen_one=",chosen_one)
+        #print("chosen_one=",chosen_one)
 
         # initial nucleation
         #remaining_pxls, cluster_list, alive, dead = clstr_nucleate(chosen_one, rad, lbl_no, orig_remaining_pxls,
@@ -344,7 +344,8 @@ def traceObjectsInImage_texture(origImage):
             dirs = alive_direction[idx]
             #print(" >>> dirs=", dirs)
             idx += 1
-            print("\t Iteration: ", idx,"/",len(alive_direction))
+            #print("\t Iteration: ", idx,"/",len(alive_direction))
+
             # re-nucleates on alive circles that are 2*rad distance away from initial point
             #if abs(dirs[0]-chosen_one[0])==2*rad or abs(dirs[1]-chosen_one[1])==2*rad:
 
@@ -470,8 +471,7 @@ def traceObjectsInImage_texture(origImage):
         plt.ylabel("r-b")
         plt.show()
 
-        enc_list = enclosed_points(remaining_pxls, dead_direction, alive_direction, rad)
-        cluster_list["label_"+str(lbl_no)] += enc_list
+        '''enc_list = enclosed_points(remaining_pxls, dead_direction, alive_direction, rad)
         print("enc_list=",enc_list)
         if len(enc_list) > 0:
             for enc in enc_list:
@@ -487,9 +487,24 @@ def traceObjectsInImage_texture(origImage):
                         y += 1
             #remaining_pxls.remove(enc_list)
         else:
-            print("No pixels in the path found")
+            print("No pixels in the path found")'''
+        # get all pixels inside the cluster
+        enc_list = []
+        for enc in alive_direction:
+            z = cluster_counter(enc, remaining_pxls, R=rad, return_count=True)
+            print("counted=",z)
+            enc_list += z
+        print("len(enc_list)=",len(enc_list))
 
-        # update original remaining pixels to remove the pxls that were just labelled
+        # remove these pixels form the remaining_pxls list
+        print(" >>> len(remaining_pxls) [before]=", len(remaining_pxls))
+        #remaining_pxls.remove(enc_list)
+        remaining_pxls = [[item for item in remaining_pxls if enc[0]==item[0] and enc[1]==item[1]] for enc in enc_list]
+        print(" >>> len(remaining_pxls) [after]=", len(remaining_pxls))
+
+        # update cluster_list (this label) with pxls that were just found
+        cluster_list["label_" + str(lbl_no)] += enc_list
+
         # repeat cluster finding until remaining_pxls is empty
         orig_remaining_pxls = remaining_pxls.copy()
 
