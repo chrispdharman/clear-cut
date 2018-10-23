@@ -264,7 +264,7 @@ def traceObjectsInImage_texture(origImage):
     #rad = 6
     rad = 5
     lbl_no = 0
-    end_counter = 1
+    clr_map = plt.get_cmap('tab20')
     print("No. of remaining pxls (start) = ", len(remaining_pxls))
     print("cluster_list (start) = ", cluster_list)
     # keep finding clusters until all pxls have been labelled
@@ -303,7 +303,7 @@ def traceObjectsInImage_texture(origImage):
 
         # randomly select a pixel coordinate in the existing list
         chosen_one = remaining_pxls[randint(0, len(remaining_pxls))]
-        chosen_one = [255 // 2, 255 // 2]   # test case 1
+        #chosen_one = [255 // 2, 255 // 2]   # test case 1
         #chosen_one = [245, 0]   # test case 2
         #chosen_one = [0, 245]   # test case 3
         #chosen_one = [0, 2]     # test case 4
@@ -365,9 +365,11 @@ def traceObjectsInImage_texture(origImage):
                 for item in alive_direction:
                     # delete elements that are in alive_direction
                     # only increment index if the element is not in alive_direction
-                    for curr in alive:
+                    '''for curr in alive:
                         if item[0]==curr[0] and item[1]==curr[1]:
-                            alive.remove(curr)
+                            alive.remove(curr)'''
+                    if item in alive:
+                        alive.remove(item)
                 if timeIt:
                     print("\t \t 4. Remove alive_direction duplicates: ", time.time() - t_prev, "seconds")
                     t_prev = time.time()
@@ -380,9 +382,11 @@ def traceObjectsInImage_texture(origImage):
 
                 # remove alive directions if found in dead
                 for al in alive_direction:
-                    for dd in dead:
+                    '''for dd in dead:
                         if al[0] == dd[0] and al[1] == dd[1]:
-                            dead.remove(dd)
+                            dead.remove(dd)'''
+                    if al in dead:
+                        dead.remove(al)
                 dead_direction += dead
                 #print("\t alive_direction=", alive_direction)
                 #print("\t dead_direction=", dead_direction)
@@ -462,56 +466,62 @@ def traceObjectsInImage_texture(origImage):
 
         # graphics
         for coor in alive_direction:
-            ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor='green'))
-        for coor in dead_direction:
-            ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor='red'))
+            ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor=clr_map(lbl_no)))
+        #for coor in dead_direction:
+        #    ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor=clr_map(lbl_no)))
 
         # plot the (r-g) % difference and (r-b) % difference
         plt.xlabel("r-g")
         plt.ylabel("r-b")
         plt.show()
 
-        '''enc_list = enclosed_points(remaining_pxls, dead_direction, alive_direction, rad)
-        print("enc_list=",enc_list)
-        if len(enc_list) > 0:
-            for enc in enc_list:
-                y = 0
-                # iterate through the list which may have indices removed!
-                while y < len(remaining_pxls):
-                    item = remaining_pxls[y]
-                    if enc[0]==item[0] and enc[1]==item[1]:
-                        # if the coordinate in enc_list is found in remaining_pxls, remove it
-                        del remaining_pxls[y]
-                    else:
-                        # otherwise move to the next index in remaining_pxls
-                        y += 1
-            #remaining_pxls.remove(enc_list)
-        else:
-            print("No pixels in the path found")'''
+        # remove duplicates in alive_direction
+        alive_direction = np.unique(alive_direction, axis=0).tolist()
+
         # get all pixels inside the cluster
         enc_list = []
-        for enc in alive_direction:
-            z = cluster_counter(enc, remaining_pxls, R=rad, return_count=True)
-            print("counted=",z)
-            enc_list += z
-        print("len(enc_list)=",len(enc_list))
-
-        # remove these pixels form the remaining_pxls list
-        print(" >>> len(remaining_pxls) [before]=", len(remaining_pxls))
-        #remaining_pxls.remove(enc_list)
-        remaining_pxls = [[item for item in remaining_pxls if enc[0]==item[0] and enc[1]==item[1]] for enc in enc_list]
-        print(" >>> len(remaining_pxls) [after]=", len(remaining_pxls))
+        for alv in alive_direction:
+            enc_list += cluster_counter(alv, remaining_pxls, R=rad, return_count=True)
+        #print("len(enc_list)=",len(enc_list))
 
         # update cluster_list (this label) with pxls that were just found
         cluster_list["label_" + str(lbl_no)] += enc_list
 
-        # repeat cluster finding until remaining_pxls is empty
-        orig_remaining_pxls = remaining_pxls.copy()
+        # remove any coordinates in remaining_pxls if they are with the cluster (enc_list)
+        #t0 = time.time()
+        updated_remaining_pxls = []
+        for pxl in remaining_pxls:
+            if pxl not in enc_list:
+                updated_remaining_pxls.append(pxl)
 
-        print("No. of remaining pxls (end) = ", len(remaining_pxls))
-        print("cluster_list (end) = ", cluster_list)
+        '''for enc in enc_list:
+            y = 0
+            # iterate through the list which may have indices removed!
+            while y < len(remaining_pxls):
+                print("y=",y)
+                item = remaining_pxls[y]
+                if enc[0] == item[0] and enc[1] == item[1]:
+                    # if the coordinate in enc_list is found in remaining_pxls, remove it
+                    del remaining_pxls[y]
+                else:
+                    # otherwise move to the next index in remaining_pxls
+                    y += 1'''
+        #print("Took ",time.time()-t0," seconds to remove enclosed pxls from remaining_pxls list")
+
+        # repeat cluster finding until remaining_pxls is empty
+        orig_remaining_pxls = updated_remaining_pxls
+        remaining_pxls = orig_remaining_pxls.copy()
+        #orig_remaining_pxls = remaining_pxls.copy()
+
+        #print("No. of remaining pxls (end) = ", len(orig_remaining_pxls))
+        #print("cluster_list (end) = ", cluster_list)
 
     print("Labelled all data!")
+    # plot the (r-g) % difference and (r-b) % difference
+    plt.xlabel("r-g")
+    plt.ylabel("r-b")
+    plt.show()
+
     exit()
 
 
