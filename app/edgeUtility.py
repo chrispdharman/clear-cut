@@ -207,6 +207,7 @@ def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, border=0, i
 
 # object tracing texture method
 def traceObjectsInImage_texture(origImage):
+    timestamp_start = time.time()
     timeIt = TimeCluster
     # gradImage: create numpy 2D array of size (2n-1) of the original
     dimY, dimX, chanls = origImage.shape
@@ -247,11 +248,11 @@ def traceObjectsInImage_texture(origImage):
         t_prev = time.time()
 
     # plot the (r-g) % difference and (r-b) % difference
-    #plt.figure()
-    #plt.scatter(textureImage[:,:,0], textureImage[:,:,1])
-    #plt.xlabel("r-g")
-    #plt.ylabel("r-b")
-    #plt.show()
+    '''plt.figure()
+    plt.scatter(textureImage[:,:,0], textureImage[:,:,1])
+    plt.xlabel("r-g")
+    plt.ylabel("r-b")
+    plt.show()'''
 
     # keep track off original remaining pixels
     orig_remaining_pxls = remaining_pxls.copy()
@@ -264,7 +265,7 @@ def traceObjectsInImage_texture(origImage):
     #rad = 6
     rad = 5
     lbl_no = 0
-    clr_map = plt.get_cmap('tab20')
+    clr_map = plt.get_cmap('tab10')
     print("No. of remaining pxls (start) = ", len(remaining_pxls))
     print("cluster_list (start) = ", cluster_list)
     # keep finding clusters until all pxls have been labelled
@@ -473,7 +474,8 @@ def traceObjectsInImage_texture(origImage):
         # plot the (r-g) % difference and (r-b) % difference
         plt.xlabel("r-g")
         plt.ylabel("r-b")
-        plt.show()
+        plt.savefig("results/cluster"+str(lbl_no)+"_model"+str(timestamp_start)+".png")
+        #plt.show()
 
         # remove duplicates in alive_direction
         alive_direction = np.unique(alive_direction, axis=0).tolist()
