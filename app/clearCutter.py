@@ -6,11 +6,16 @@ import matplotlib
 from PIL import Image, ExifTags
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
+import time
 import matplotlib.gridspec as gridspec
 #from tensorflow.examples.tutorials.mnist import input_data
 
 ### IMPORT CUSTOM LIBRARIES/FUNCTIONS
 from edgeUtility import *
+
+# get file name, removing file extension
+def get_file_name(str):
+    return str[:str.find('.')]
 
 # main routine
 def main():
@@ -23,14 +28,20 @@ def main():
     #test_labels = np.asarray(mnist.test.labels, dtype=np.int32)
 
     # import single image
-    #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/Bob.jpeg"
-    #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/colorful1.jpeg"
-    #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/john1.jpg"
-    #imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/minimal1.jpg"
-    imagePath = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/heathers_cats.jpg"
+    base_dir = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/"
+    #img_file = "Bob.jpeg"
+    #img_file = "colorful1.jpeg"
+    #img_file = "john1.jpg"
+    #img_file = "minimal1.jpg"
+    img_file = "heathers_cats.jpg"
+    imagePath = base_dir + img_file
     imageRaw = Image.open(imagePath)
     image = np.array(imageRaw)
     print("Image size: ", image.shape)
+
+    # results output path
+    img_path = "results/"+get_file_name(img_file)
+    timestamp_start = int(time.time()-1530562615)
 
     # check whether or not the raw image contains exif data
     try:
@@ -49,7 +60,8 @@ def main():
     pdict['im_h'+str(k)], pdict['im_w'+str(k)], _ = image.shape
     pdict['im_kern_h' + str(k)], pdict['im_kern_w' + str(k)] = ['N/A', 'N/A']
     # check if the image is too small to be pooled, then pool the image
-    while img_mean(image.shape) > 500:
+    #while img_mean(image.shape) > 500:
+    while img_mean(image.shape) > 300:
         k = k + 1
         # calculate the smallest kernel size that fits into the image
         krn_h, krn_w, image = calcKernelSize(image)
@@ -87,7 +99,7 @@ def main():
 
     # MAKE AS FUNCTION PASSING IN AND RETURNING pdict
     # execute clearCut method and store in edge array for masking
-    edgy_images = traceObjectsInImage(image, method = "texture") # later think about implementing different methods as an argument
+    edgy_images = traceObjectsInImage(image, method = "texture", results_path = img_path, mdl_no = timestamp_start) # later think about implementing different methods as an argument
     #edgy_images = traceObjectsInImage(image, method= "gradient")
 
     # remove edge pixels that cannot possibly contain an edge (may need to change order with edgeFiller?)

@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 import math
 import time
+import os
+import csv
 
 
 # quick access to debug output
@@ -17,13 +19,18 @@ TimeCounter = False
 DebugStepPath = False
 
 # object tracing method handler
-def traceObjectsInImage(origImage, method = "gradient"):
+def traceObjectsInImage(origImage, method = "gradient", results_path = "results", mdl_no = ""):
+    # create results directory if it doesn't yet exist
+    if not os.path.isdir(results_path):
+        os.mkdir(results_path)
+
+    # call relevant function based on the specified method
     if method == "gradient":
         # good for handling sharp edges
-        return traceObjectsInImage_gradient(origImage)
+        return traceObjectsInImage_gradient(origImage, results_path + "/" + method, mdl_no)
     elif method == "texture":
         # good for handling blurred edges
-        return traceObjectsInImage_texture(origImage)
+        return traceObjectsInImage_texture(origImage, results_path + "/" + method, mdl_no)
     else:
         print("No edge detection method specified. Stopping code execution.")
         exit()
@@ -206,8 +213,11 @@ def clstr_nucleate(point, rad, lbl_no, remaining_pxls, cluster_list, border=0, i
     return cluster_list, alive_direction, dead_direction
 
 # object tracing texture method
-def traceObjectsInImage_texture(origImage):
-    timestamp_start = time.time()
+def traceObjectsInImage_texture(origImage, results_path = "results", model_no=""):
+    # create results/texture directory if it doesn't yet exist
+    if not os.path.isdir(results_path):
+        os.mkdir(results_path)
+
     timeIt = TimeCluster
     # gradImage: create numpy 2D array of size (2n-1) of the original
     dimY, dimX, chanls = origImage.shape
@@ -254,271 +264,227 @@ def traceObjectsInImage_texture(origImage):
     plt.ylabel("r-b")
     plt.show()'''
 
-    # keep track off original remaining pixels
-    orig_remaining_pxls = remaining_pxls.copy()
+    # create new model using clustering algorithm
+    model = ""
+    # use existing model
+    model = "10002577"
 
-    # classify clustered regions
-    #print("remaining_pxls=", remaining_pxls)
-    cluster_list = {
-        "label_0" : []
-    }
-    #rad = 6
-    rad = 5
-    lbl_no = 0
-    clr_map = plt.get_cmap('tab10')
-    print("No. of remaining pxls (start) = ", len(remaining_pxls))
-    print("cluster_list (start) = ", cluster_list)
-    # keep finding clusters until all pxls have been labelled
-    while len(orig_remaining_pxls) > 0:
-        alive_direction = []
-        dead_direction = []
-        lbl_no += 1
-        print("Cluster [", lbl_no,"] determination in progress...")
+    # check if model path exists or not, then act accordingly
+    if not os.isdir(results_path + "/model_" + str(model)):
+        # create results/texture/model_{timestamp} directory
+        model_path = results_path + "/model_" + str(model_no)
+        os.mkdir(model_path)
 
-        # check the points in cluster label 1 have been removed
-        '''if lbl_no == 2:
-            plt.figure()
-            plt.scatter((np.array(orig_remaining_pxls).T)[0], (np.array(orig_remaining_pxls).T)[1], s=1)
-            plt.show()'''
+        # keep track off original remaining pixels
+        orig_remaining_pxls = remaining_pxls.copy()
 
-        if timeIt:
-            t_prev = time.time()
-        # setup graph
-        fig, ax = plt.subplots(1)
-        ax.set_aspect('equal')
-        #ax.scatter(textureImage[:, :, 0], textureImage[:, :, 1], s=1)
-        ax.scatter((np.array(orig_remaining_pxls).T)[0], (np.array(orig_remaining_pxls).T)[1], s=1)
-        if timeIt:
-            print("\t \t 2. Configure graph: ", time.time() - t_prev, "seconds")
-            t_prev = time.time()
+        # classify clustered regions
+        #print("remaining_pxls=", remaining_pxls)
+        cluster_list = {
+            "label_0" : []
+        }
+        #rad = 6
+        rad = 5
+        lbl_no = 0
+        clr_map = plt.get_cmap('tab10')
+        print("No. of remaining pxls (start) = ", len(remaining_pxls))
+        print("cluster_list (start) = ", cluster_list)
+        # keep finding clusters until all pxls have been labelled
+        while len(orig_remaining_pxls) > 0:
+            alive_direction = []
+            dead_direction = []
+            lbl_no += 1
+            print("Cluster [", lbl_no,"] determination in progress...")
 
-        # put a criteria here to set all_outer_dead = True if all outer bubbles are dead...
-        # edgy_img = np.zeros((255, 255))
-        '''brdr = 2 * rad
-        edgy_img = np.zeros((255 + 2 * brdr, 255 + 2 * brdr))
-        for u in range(0, edgy_img.shape[0]):
-            for v in range(0, edgy_img.shape[1]):
-                # make a border around the image so that it does not go out of bounds?
-                if u < brdr or v < brdr or u > 255 + brdr or v > 255 + brdr:
-                    edgy_img[u, v] = -0.1'''
+            # check the points in cluster label 1 have been removed
+            '''if lbl_no == 2:
+                plt.figure()
+                plt.scatter((np.array(orig_remaining_pxls).T)[0], (np.array(orig_remaining_pxls).T)[1], s=1)
+                plt.show()'''
 
-        # randomly select a pixel coordinate in the existing list
-        chosen_one = remaining_pxls[randint(0, len(remaining_pxls))]
-        #chosen_one = [255 // 2, 255 // 2]   # test case 1
-        #chosen_one = [245, 0]   # test case 2
-        #chosen_one = [0, 245]   # test case 3
-        #chosen_one = [0, 2]     # test case 4
-        #chosen_one = [250, 250]     # test case 5
-        #print("chosen_one=",chosen_one)
+            if timeIt:
+                t_prev = time.time()
+            # setup graph
+            fig, ax = plt.subplots(1)
+            ax.set_aspect('equal')
+            #ax.scatter(textureImage[:, :, 0], textureImage[:, :, 1], s=1)
+            ax.scatter((np.array(orig_remaining_pxls).T)[0], (np.array(orig_remaining_pxls).T)[1], s=1)
+            if timeIt:
+                print("\t \t 2. Configure graph: ", time.time() - t_prev, "seconds")
+                t_prev = time.time()
 
-        # initial nucleation
-        #remaining_pxls, cluster_list, alive, dead = clstr_nucleate(chosen_one, rad, lbl_no, orig_remaining_pxls,
-        #                                                           cluster_list, border=brdr, iter_max=17, init=True)
-        #cluster_list, alive, dead = clstr_nucleate(chosen_one, rad, lbl_no, orig_remaining_pxls,
-        #                                                     cluster_list, border=brdr, iter_max=17, init=True)
-        cluster_list, alive, dead = clstr_nucleate(chosen_one, rad, lbl_no, orig_remaining_pxls,
-                                                   cluster_list, iter_max=17, init=True)
-        if timeIt:
-            print("\t \t 3. Cluster nucleate...: ", time.time() - t_prev, "seconds")
-            t_prev = time.time()
+            # put a criteria here to set all_outer_dead = True if all outer bubbles are dead...
+            # edgy_img = np.zeros((255, 255))
+            '''brdr = 2 * rad
+            edgy_img = np.zeros((255 + 2 * brdr, 255 + 2 * brdr))
+            for u in range(0, edgy_img.shape[0]):
+                for v in range(0, edgy_img.shape[1]):
+                    # make a border around the image so that it does not go out of bounds?
+                    if u < brdr or v < brdr or u > 255 + brdr or v > 255 + brdr:
+                        edgy_img[u, v] = -0.1'''
 
-        alive_direction += alive
-        dead_direction += dead
+            # randomly select a pixel coordinate in the existing list
+            chosen_one = remaining_pxls[randint(0, len(remaining_pxls)-1)]
+            #chosen_one = [255 // 2, 255 // 2]   # test case 1
+            #chosen_one = [245, 0]   # test case 2
+            #chosen_one = [0, 245]   # test case 3
+            #chosen_one = [0, 2]     # test case 4
+            #chosen_one = [250, 250]     # test case 5
+            #print("chosen_one=",chosen_one)
 
-        # populate dead_directions with value 1 in edgy_img
-        #for edge in dead_direction:
-        #    edgy_img[edge[0], edge[1]] = 1
+            # initial nucleation
+            #remaining_pxls, cluster_list, alive, dead = clstr_nucleate(chosen_one, rad, lbl_no, orig_remaining_pxls,
+            #                                                           cluster_list, border=brdr, iter_max=17, init=True)
+            #cluster_list, alive, dead = clstr_nucleate(chosen_one, rad, lbl_no, orig_remaining_pxls,
+            #                                                     cluster_list, border=brdr, iter_max=17, init=True)
+            cluster_list, alive, dead = clstr_nucleate(chosen_one, rad, lbl_no, orig_remaining_pxls,
+                                                       cluster_list, iter_max=17, init=True)
+            if timeIt:
+                print("\t \t 3. Cluster nucleate...: ", time.time() - t_prev, "seconds")
+                t_prev = time.time()
 
-        #print("\t alive_direction=", alive_direction)
-        #print("\t dead_direction=", dead_direction)
+            alive_direction += alive
+            dead_direction += dead
 
-        # reiterate nucleation until all outer bubbles are dead
-        #all_outer_dead = False
-        # initiate new alive directions with current list
-        #while not all_outer_dead:
-        # for any outermost bubbles that found new pixels, nucleate another bubble around them
-        #for dirs in alive_direction:
-        idx = 0
-        #while idx < len(alive_direction):
-        #print("alive_direction=", alive_direction)
-        while idx < len(alive_direction):
-            dirs = alive_direction[idx]
-            #print(" >>> dirs=", dirs)
-            idx += 1
-            #print("\t Iteration: ", idx,"/",len(alive_direction))
+            # populate dead_directions with value 1 in edgy_img
+            #for edge in dead_direction:
+            #    edgy_img[edge[0], edge[1]] = 1
 
-            # re-nucleates on alive circles that are 2*rad distance away from initial point
-            #if abs(dirs[0]-chosen_one[0])==2*rad or abs(dirs[1]-chosen_one[1])==2*rad:
+            #print("\t alive_direction=", alive_direction)
+            #print("\t dead_direction=", dead_direction)
 
-            # re-nucleates on alive circles that are 2*rad distance away from initial point
-            if not ((dirs[0] == chosen_one[0]) and (dirs[1] == chosen_one[1])):
-                if timeIt:
-                    t_prev = time.time()
-                #print("\t I'm outer alive!: ",dirs, "--> (", abs(dirs[0]-chosen_one[0]),",",abs(dirs[1]-chosen_one[1]))
-                #cluster_list, alive, dead = clstr_nucleate(dirs, rad, lbl_no, orig_remaining_pxls,
-                #                                                           cluster_list, border = brdr)
-                cluster_list, alive, dead = clstr_nucleate(dirs, rad, lbl_no, orig_remaining_pxls, cluster_list)
-                if timeIt:
-                    print("\t \t 3. Cluster nucleate...: ", time.time() - t_prev, "seconds")
-                    t_prev = time.time()
+            # reiterate nucleation until all outer bubbles are dead
+            #all_outer_dead = False
+            # initiate new alive directions with current list
+            #while not all_outer_dead:
+            # for any outermost bubbles that found new pixels, nucleate another bubble around them
+            #for dirs in alive_direction:
+            idx = 0
+            #while idx < len(alive_direction):
+            #print("alive_direction=", alive_direction)
+            while idx < len(alive_direction):
+                dirs = alive_direction[idx]
+                #print(" >>> dirs=", dirs)
+                idx += 1
+                #print("\t Iteration: ", idx,"/",len(alive_direction))
 
-                # remove entries in alive that are already in alive_direction
-                for item in alive_direction:
-                    # delete elements that are in alive_direction
-                    # only increment index if the element is not in alive_direction
-                    '''for curr in alive:
-                        if item[0]==curr[0] and item[1]==curr[1]:
-                            alive.remove(curr)'''
-                    if item in alive:
-                        alive.remove(item)
-                if timeIt:
-                    print("\t \t 4. Remove alive_direction duplicates: ", time.time() - t_prev, "seconds")
-                    t_prev = time.time()
+                # re-nucleates on alive circles that are 2*rad distance away from initial point
+                #if abs(dirs[0]-chosen_one[0])==2*rad or abs(dirs[1]-chosen_one[1])==2*rad:
 
-                # make sure alive directions are not overwritten by dead ones!
-                alive_direction += alive
+                # re-nucleates on alive circles that are 2*rad distance away from initial point
+                if not ((dirs[0] == chosen_one[0]) and (dirs[1] == chosen_one[1])):
+                    if timeIt:
+                        t_prev = time.time()
+                    #print("\t I'm outer alive!: ",dirs, "--> (", abs(dirs[0]-chosen_one[0]),",",abs(dirs[1]-chosen_one[1]))
+                    cluster_list, alive, dead = clstr_nucleate(dirs, rad, lbl_no, orig_remaining_pxls, cluster_list)
+                    if timeIt:
+                        print("\t \t 3. Cluster nucleate...: ", time.time() - t_prev, "seconds")
+                        t_prev = time.time()
 
-                # remove duplicates in alive_direction
-                #alive_direction = np.unique(alive_direction, axis=0).tolist()
+                    # remove entries in alive that are already in alive_direction
+                    for item in alive_direction:
+                        # delete elements that are in alive_direction
+                        # only increment index if the element is not in alive_direction
+                        '''for curr in alive:
+                            if item[0]==curr[0] and item[1]==curr[1]:
+                                alive.remove(curr)'''
+                        if item in alive:
+                            alive.remove(item)
+                    if timeIt:
+                        print("\t \t 4. Remove alive_direction duplicates: ", time.time() - t_prev, "seconds")
+                        t_prev = time.time()
 
-                # remove alive directions if found in dead
-                for al in alive_direction:
-                    '''for dd in dead:
-                        if al[0] == dd[0] and al[1] == dd[1]:
-                            dead.remove(dd)'''
-                    if al in dead:
-                        dead.remove(al)
-                dead_direction += dead
-                #print("\t alive_direction=", alive_direction)
-                #print("\t dead_direction=", dead_direction)
-                if timeIt:
-                    print("\t \t 5. Remove dead directions in alive_direction: ", time.time() - t_prev, "seconds")
-                    t_prev = time.time()
+                    # make sure alive directions are not overwritten by dead ones!
+                    alive_direction += alive
 
-                #print("dead_direction=",dead_direction)
-                #print("No. of dead directions =", len(dead_direction))
+                    # remove duplicates in alive_direction
+                    #alive_direction = np.unique(alive_direction, axis=0).tolist()
 
-                # multiple (5) attempts at finding a random path within the dead directions
-                '''attempt = 0
+                    # remove alive directions if found in dead
+                    for al in alive_direction:
+                        '''for dd in dead:
+                            if al[0] == dd[0] and al[1] == dd[1]:
+                                dead.remove(dd)'''
+                        if al in dead:
+                            dead.remove(al)
+                    dead_direction += dead
+                    #print("\t alive_direction=", alive_direction)
+                    #print("\t dead_direction=", dead_direction)
+                    if timeIt:
+                        print("\t \t 5. Remove dead directions in alive_direction: ", time.time() - t_prev, "seconds")
+                        t_prev = time.time()
 
-                # killed this line as dead may be ==[] and break out
-                #while len(dead) > 0 and not all_outer_dead and attempt < 5:
-                while not all_outer_dead and attempt < 5:
-                    attempt += 1
-                    # populate dead_directions with value 1 in edgy_img (shifted by (+border,+border) )
-                    for edge in dead_direction:
-                        edgy_img[edge[0], edge[1]] = 1
+                    #print("dead_direction=",dead_direction)
+                    #print("No. of dead directions =", len(dead_direction))
 
-                    #print("attempt=",attempt)
-                    all_outer_dead, dead_path = randomPathEdgeRace(edgy_img, adj_size = rad, border = brdr, showPath = ShowPath)
-
-                    # remove duplicate entries in dead_path
-                    dead_path = np.unique(dead_path, axis = 0).tolist()
-                    # dead_path needs shifting by border in the x- and y-direction
-                    for i in range(0, len(dead_path)):
-                        coor = dead_path[i]
-                        dead_path[i] = [coor[0] - brdr, coor[1] - brdr]
-
-                    # if enclosed path is too small, add enclosed pxls to label 0
-                    #print("dead_path=", dead_path)
-                    #print("len(dead_path)=",len(dead_path))
-                    if all_outer_dead and len(dead_path)<15:
-                        # do not label points with no or only one alive circle inside the enclosed path
-                        all_outer_dead = False
-                        clstr_pxls = enclosed_points(remaining_pxls, dead_path, alive_direction, rad)
-                        #print(">>>clstr_pxls=",clstr_pxls)
-                        #print(">>>len(clstr_pxls)=",len(clstr_pxls))
-
-                        # do not label points residing in only a single alive circle
-                        if len(clstr_pxls) == 1:
-                            bad = clstr_pxls[0]
-                            # remove from current label, put into label 0 instead
-                            cluster_list["label_0"] += bad
-                            #clstr = np.array(cluster_list["label_" + str(lbl_no)])
-                            #print("clstr.shape=",clstr.shape)
-                            #for inst in range(0, len(clstr.shape[0])):
-                            #    print("clstr[inst]=",clstr[inst])
-                            #    if bad[0]==(clstr[inst])[0] and bad[1]==(clstr[inst])[1]:
-                            #        del cluster_list["label_" + str(lbl_no)][inst]
-                            for inst in cluster_list["label_" + str(lbl_no)]:
-                                if bad[0] == inst[0] and bad[1] == inst[1]:
-                                    cluster_list["label_" + str(lbl_no)].remove(inst)
-
-                #print("\t all_outer_dead=",all_outer_dead, ", attempt=", attempt)
-
-                # break for loop if enclosed path found: no need to iterate over more alive directions
-                if all_outer_dead:
-                    break'''
-
-        # shift back all coordinates in alive_direction, dead_direction and dead_path
-        '''for i in range(0,len(alive_direction)):
-            coor = alive_direction[i]
-            alive_direction[i] = [coor[0]-brdr, coor[1]-brdr]
             # graphics
-            ax.add_patch(Circle((coor[0]-brdr, coor[1]-brdr), rad, facecolor=(0, 0, 0, 0), edgecolor='green'))
-        for i in range(0, len(dead_direction)):
-            coor = dead_direction[i]
-            dead_direction[i] = [coor[0] - brdr, coor[1] - brdr]
-            # graphics
-            ax.add_patch(Circle((coor[0]-brdr, coor[1]-brdr), rad, facecolor=(0, 0, 0, 0), edgecolor='red'))'''
-        #for coor in dead_path:
-            # graphics
-        #    ax.add_patch(Circle((coor[0], coor[1]), rad/10, facecolor=(0, 0, 0, 0), edgecolor='blue'))
+            for coor in alive_direction:
+                ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor=clr_map(lbl_no)))
+            #for coor in dead_direction:
+            #    ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor=clr_map(lbl_no)))
 
-        # graphics
-        for coor in alive_direction:
-            ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor=clr_map(lbl_no)))
-        #for coor in dead_direction:
-        #    ax.add_patch(Circle((coor[0], coor[1]), rad, facecolor=(0, 0, 0, 0), edgecolor=clr_map(lbl_no)))
+            # plot the (r-g) % difference and (r-b) % difference
+            plt.xlabel("r-g")
+            plt.ylabel("r-b")
+            plt.savefig(model_path+"/cluster_"+str(lbl_no)+".png")
+            #plt.show()
 
-        # plot the (r-g) % difference and (r-b) % difference
-        plt.xlabel("r-g")
-        plt.ylabel("r-b")
-        plt.savefig("results/cluster"+str(lbl_no)+"_model"+str(timestamp_start)+".png")
-        #plt.show()
+            # remove duplicates in alive_direction
+            alive_direction = np.unique(alive_direction, axis=0).tolist()
 
-        # remove duplicates in alive_direction
-        alive_direction = np.unique(alive_direction, axis=0).tolist()
+            # get all pixels inside the cluster
+            enc_list = []
+            for alv in alive_direction:
+                enc_list += cluster_counter(alv, remaining_pxls, R=rad, return_count=True)
+            #print("len(enc_list)=",len(enc_list))
 
-        # get all pixels inside the cluster
-        enc_list = []
-        for alv in alive_direction:
-            enc_list += cluster_counter(alv, remaining_pxls, R=rad, return_count=True)
-        #print("len(enc_list)=",len(enc_list))
+            # update cluster_list (this label) with pxls that were just found
+            cluster_list["label_" + str(lbl_no)] += enc_list
 
-        # update cluster_list (this label) with pxls that were just found
-        cluster_list["label_" + str(lbl_no)] += enc_list
+            # remove any coordinates in remaining_pxls if they are with the cluster (enc_list)
+            #t0 = time.time()
+            updated_remaining_pxls = []
+            for pxl in remaining_pxls:
+                if pxl not in enc_list:
+                    updated_remaining_pxls.append(pxl)
 
-        # remove any coordinates in remaining_pxls if they are with the cluster (enc_list)
-        #t0 = time.time()
-        updated_remaining_pxls = []
-        for pxl in remaining_pxls:
-            if pxl not in enc_list:
-                updated_remaining_pxls.append(pxl)
+            '''for enc in enc_list:
+                y = 0
+                # iterate through the list which may have indices removed!
+                while y < len(remaining_pxls):
+                    print("y=",y)
+                    item = remaining_pxls[y]
+                    if enc[0] == item[0] and enc[1] == item[1]:
+                        # if the coordinate in enc_list is found in remaining_pxls, remove it
+                        del remaining_pxls[y]
+                    else:
+                        # otherwise move to the next index in remaining_pxls
+                        y += 1'''
+            #print("Took ",time.time()-t0," seconds to remove enclosed pxls from remaining_pxls list")
 
-        '''for enc in enc_list:
-            y = 0
-            # iterate through the list which may have indices removed!
-            while y < len(remaining_pxls):
-                print("y=",y)
-                item = remaining_pxls[y]
-                if enc[0] == item[0] and enc[1] == item[1]:
-                    # if the coordinate in enc_list is found in remaining_pxls, remove it
-                    del remaining_pxls[y]
-                else:
-                    # otherwise move to the next index in remaining_pxls
-                    y += 1'''
-        #print("Took ",time.time()-t0," seconds to remove enclosed pxls from remaining_pxls list")
+            # repeat cluster finding until remaining_pxls is empty
+            orig_remaining_pxls = updated_remaining_pxls
+            remaining_pxls = orig_remaining_pxls.copy()
+            #orig_remaining_pxls = remaining_pxls.copy()
 
-        # repeat cluster finding until remaining_pxls is empty
-        orig_remaining_pxls = updated_remaining_pxls
-        remaining_pxls = orig_remaining_pxls.copy()
-        #orig_remaining_pxls = remaining_pxls.copy()
+            #print("No. of remaining pxls (end) = ", len(orig_remaining_pxls))
+            #print("cluster_list (end) = ", cluster_list)
 
-        #print("No. of remaining pxls (end) = ", len(orig_remaining_pxls))
-        #print("cluster_list (end) = ", cluster_list)
+        # output final cluster_list dictionary
+        print("Labelled all data!")
 
-    print("Labelled all data!")
+        # output dictionary to results folder
+        write_file = csv.writer(open(model_path + "/cluster_list.txt", 'w'))
+        for key, val in cluster_list.items():
+            write_file.writerow([key, val])
+    # if model directory does exist
+    else:
+        # read in cluster_list
+        with open(results_path + "/model_" + str(model) + "/cluster_list.txt") as dict_file:
+            reader = csv.reader(dict_file)
+            cluster_list = {rows[0]:rows[1] for rows in reader}
+    print("cluster_list=",cluster_list)
+
     # plot the (r-g) % difference and (r-b) % difference
     plt.xlabel("r-g")
     plt.ylabel("r-b")
@@ -575,7 +541,7 @@ def traceObjectsInImage_texture(origImage):
     return edge_array
 
 # object tracing one-layer gradient method
-def traceObjectsInImage_gradient(origImage):
+def traceObjectsInImage_gradient(origImage, results_path = "results"):
     # gradImage: create numpy 2D array of size (2n-1) of the original
     dimY, dimX, chanls = origImage.shape
 
