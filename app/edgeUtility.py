@@ -262,16 +262,16 @@ def traceObjectsInImage_texture(origImage, results_path = "results", model_no=""
         t_prev = time.time()
 
     # plot the (r-g) % difference and (r-b) % difference
-    '''plt.figure()
-    plt.scatter(textureImage[:,:,0], textureImage[:,:,1])
+    plt.figure()
+    plt.scatter(textureImage[:,:,0], textureImage[:,:,1], s=1)
     plt.xlabel("r-g")
     plt.ylabel("r-b")
-    plt.show()'''
+    plt.show()
 
     # create new model using clustering algorithm
     model = ""
     # use existing model
-    model = "10002577"
+    model = "10004078"
 
     # check if model path exists or not, then act accordingly
     if not os.path.isdir(results_path + "/model_" + str(model)):
@@ -474,7 +474,7 @@ def traceObjectsInImage_texture(origImage, results_path = "results", model_no=""
         # read in cluster_list
         with open(results_path + "/model_" + str(model) + "/cluster_list.txt") as dict_file:
             reader = csv.reader(dict_file)
-            cluster_list = {rows[0]:rows[1] for rows in reader}
+            cluster_list = {rows[0]:(rows[1].split()) for rows in reader}
     print("cluster_list=",cluster_list)
 
     # plot the (r-g) % difference and (r-b) % difference

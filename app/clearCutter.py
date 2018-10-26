@@ -29,11 +29,11 @@ def main():
 
     # import single image
     base_dir = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/"
-    #img_file = "Bob.jpeg"
-    #img_file = "colorful1.jpeg"
+    img_file = "Bob.jpeg"
+    img_file = "colorful1.jpeg"
     #img_file = "john1.jpg"
     #img_file = "minimal1.jpg"
-    img_file = "heathers_cats.jpg"
+    #img_file = "heathers_cats.jpg"
     imagePath = base_dir + img_file
     imageRaw = Image.open(imagePath)
     image = np.array(imageRaw)
