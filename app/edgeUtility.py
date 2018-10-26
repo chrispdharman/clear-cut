@@ -8,7 +8,7 @@ from matplotlib.patches import Circle
 import math
 import time
 import os
-import csv
+import csv, sys
 
 
 # quick access to debug output
@@ -17,6 +17,9 @@ TimeCluster = False
 TimeNucleation = False
 TimeCounter = False
 DebugStepPath = False
+
+# increase csv file size limit
+csv.field_size_limit(sys.maxsize)
 
 # object tracing method handler
 def traceObjectsInImage(origImage, method = "gradient", results_path = "results", mdl_no = ""):
@@ -240,7 +243,8 @@ def traceObjectsInImage_texture(origImage, results_path = "results", model_no=""
         for i in range(0, dimX):
 
             # get difference between red and an `other' colour channel
-            pt = origImage[j, i]
+            pt = (origImage[j, i])
+            pt = [int(pt[0]), int(pt[1]), int(pt[2])]
             textureImage[j, i][0] = (pt[0] - pt[1])
             textureImage[j, i][1] = (pt[0] - pt[2])
             #textureImage[j, i][2] = pt[0]
@@ -270,7 +274,7 @@ def traceObjectsInImage_texture(origImage, results_path = "results", model_no=""
     model = "10002577"
 
     # check if model path exists or not, then act accordingly
-    if not os.isdir(results_path + "/model_" + str(model)):
+    if not os.path.isdir(results_path + "/model_" + str(model)):
         # create results/texture/model_{timestamp} directory
         model_path = results_path + "/model_" + str(model_no)
         os.mkdir(model_path)
@@ -448,18 +452,6 @@ def traceObjectsInImage_texture(origImage, results_path = "results", model_no=""
                 if pxl not in enc_list:
                     updated_remaining_pxls.append(pxl)
 
-            '''for enc in enc_list:
-                y = 0
-                # iterate through the list which may have indices removed!
-                while y < len(remaining_pxls):
-                    print("y=",y)
-                    item = remaining_pxls[y]
-                    if enc[0] == item[0] and enc[1] == item[1]:
-                        # if the coordinate in enc_list is found in remaining_pxls, remove it
-                        del remaining_pxls[y]
-                    else:
-                        # otherwise move to the next index in remaining_pxls
-                        y += 1'''
             #print("Took ",time.time()-t0," seconds to remove enclosed pxls from remaining_pxls list")
 
             # repeat cluster finding until remaining_pxls is empty
