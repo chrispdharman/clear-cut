@@ -1,5 +1,3 @@
-### IMPORT STANDARD PYTHON LIBRARIES/FUNCTIONS
-#import tensorflow as tf
 import time
 import numpy as np
 from PIL import Image, ExifTags
@@ -9,61 +7,89 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+#import tensorflow as tf
 #from tensorflow.examples.tutorials.mnist import input_data
 
-### IMPORT CUSTOM LIBRARIES/FUNCTIONS
-from edgeUtility import *
+from edge_utility import 
 
-# get file name, removing file extension
-def get_file_name(str):
-    return str[:str.find('.')]
 
-# main routine
-def main():
-    # load data
-    # mnist = tf.contrib.learn.datasets.load_dataset("mnist", one_hot=True)
-    #mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
-    #train_data = mnist.train.images
-    #train_labels = np.asarray(mnist.train.labels, dtype=np.int32)
-    #test_data = mnist.test.images
-    #test_labels = np.asarray(mnist.test.labels, dtype=np.int32)
+class ClearCut(object):
 
-    # import single image
-    base_dir = "/Users/ch392/Documents/dataScience/personalStudy/clearCut/app/images/"
-    img_file = "Bob.jpeg"
-    img_file = "colorful1.jpeg"
-    #img_file = "john1.jpg"
-    #img_file = "minimal1.jpg"
-    #img_file = "heathers_cats.jpg"
-    imagePath = ''.join([base_dir, img_file])
-    imageRaw = Image.open(imagePath)
-    image = np.array(imageRaw)
-    print("Image size: ", image.shape)
+    def __init__(self):
+        self.base_dir = "app/images"
+        self.default_image_selection()
 
-    # results output path
-    img_path = "results/"+get_file_name(img_file)
-    timestamp_start = int(time.time()-1530562615)
 
-    # check whether or not the raw image contains exif data
-    try:
-        # check and rotate image to correct orientation
-        # taken from https://stackoverflow.com/questions/4228530/pil-thumbnail-is-rotating-my-image
-        exif = dict((ExifTags.TAGS[k], v) for k, v in imageRaw._getexif().items() if k in ExifTags.TAGS)
-        if exif['Orientation']==3:
-            image=np.rot90(np.rot90(image))
-    except AttributeError as err:
-        print("AttributeError: ", err)
-    imageRaw = image
+    def default_image_selection(self):
+        self.image_filename = "Bob.jpeg"
+        self.image_filename = "colorful1.jpeg"
+        #self.image_filename = "john1.jpg"
+        #self.image_filename = "minimal1.jpg"
+        #self.image_filename = "heathers_cats.jpg"
+        image_filepath = '/'.join([base_dir, img_file])
+        self.image_raw = self.__upright_image(Image.open(image_filepath))
+        self.image = np.array(imageRaw)
+        print("Image size: ", image.shape)
+
+        self.results_filepath = '/'.join(
+            ["results", __get_file_name(image_filename)]
+        )
+
+
+    def __upright_image(self, image):
+        '''
+        Check for image orientation in exif data. See reference
+        https://stackoverflow.com/questions/4228530/pil-thumbnail-is-rotating-my-image
+        '''
+        exif = dict(
+            (ExifTags.TAGS[k], v)
+            for k, v in imageRaw._getexif().items()
+            if k in ExifTags.TAGS)
+        )
+        if exif['Orientation'] == 3:
+            image = np.rot90(np.rot90(image))
+        return image
+    
+    
+    def train_model(self):
+        '''
+        Load mnist data
+        '''
+        # mnist = tf.contrib.learn.datasets.load_dataset("mnist", one_hot=True)
+        #mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
+        #train_data = mnist.train.images
+        #train_labels = np.asarray(mnist.train.labels, dtype=np.int32)
+        #test_data = mnist.test.images
+        #test_labels = np.asarray(mnist.test.labels, dtype=np.int32)
+
+
+    def __get_file_name(self, filename):
+        '''
+        Get file name, removing file extension
+        '''
+        name, _ = filename.split('.')
+        return name
+    
+
+    def reduce_image_size(self):
+
 
     # create dictionary to store the history of pooled images
-    pdict = {}
+    pdict = {
+        'image': {
+            'height': [image.shape[0]],
+            'width': [image.shape[1]],
+        },
+        'kernel': {
+            'height': ['N/A'],
+            'width': ['N/A'],
+        },
+    }
     k = 0
-    pdict['im_h'+str(k)], pdict['im_w'+str(k)], _ = image.shape
-    pdict['im_kern_h' + str(k)], pdict['im_kern_w' + str(k)] = ['N/A', 'N/A']
     # check if the image is too small to be pooled, then pool the image
     #while img_mean(image.shape) > 500:
     while img_mean(image.shape) > 300:
-        k = k + 1
+        k += 1
         # calculate the smallest kernel size that fits into the image
         krn_h, krn_w, image = calcKernelSize(image)
         #print("krn_h=", krn_h, ", krn_w=", krn_w)
@@ -179,6 +205,3 @@ def main():
     plt.figure()
     plt.imshow(train_data[randint(0, train_data.shape[0])].reshape(28, 28))
     plt.show()
-
-main()
-exit()
