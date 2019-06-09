@@ -1,12 +1,13 @@
 ### IMPORT STANDARD PYTHON LIBRARIES/FUNCTIONS
 #import tensorflow as tf
+import time
 import numpy as np
-from random import randint
-import matplotlib
 from PIL import Image, ExifTags
+from random import randint
+
+import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
-import time
 import matplotlib.gridspec as gridspec
 #from tensorflow.examples.tutorials.mnist import input_data
 
@@ -34,7 +35,7 @@ def main():
     #img_file = "john1.jpg"
     #img_file = "minimal1.jpg"
     #img_file = "heathers_cats.jpg"
-    imagePath = base_dir + img_file
+    imagePath = ''.join([base_dir, img_file])
     imageRaw = Image.open(imagePath)
     image = np.array(imageRaw)
     print("Image size: ", image.shape)
