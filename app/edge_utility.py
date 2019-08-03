@@ -60,10 +60,9 @@ class ImageUtils(object):
         if return_count:
             # list comprehension style!
             coord_list += [
-                coord 
-                if math.sqrt((coord[0] - chosen_one[0])**2
-                            + (coord[1] - chosen_one[1])**2 ) <= R
+                coord
                 for coord in pxl_list
+                if math.sqrt((coord[0] - chosen_one[0])**2 + (coord[1] - chosen_one[1])**2 ) <= R
             ]
             return coord_list
         
@@ -693,7 +692,7 @@ class ImageUtils(object):
 
         # determine lowest denominator in image width
         k_w = 2
-        while ( img_w % k_w) != 0 ):
+        while ( (img_w % k_w) != 0 ):
             k_w += 1
             if (k_w > img_w/2):
                 print("Error: the image width is a prime number. Cannot determine pooling kernel size.")
@@ -1167,3 +1166,4 @@ class ImageUtils(object):
         plt.figure()
         plt.imshow(edgy_images + edge_path_img)
         plt.show()
+        
