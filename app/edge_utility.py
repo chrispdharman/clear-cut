@@ -25,21 +25,32 @@ class ImageUtils(object):
         csv.field_size_limit(sys.maxsize)
 
 
-    def trace_objects_in_image(self, origImage, method = "gradient", results_path = "results", mdl_no = ""):
+    def trace_objects_in_image(self, image=None, method="gradient", results_path=None, model_no=""):
         '''
         Object tracing method handler
         '''
+        object_tracing_kwargs = {
+            "image": image,
+            "model_no": model_no,
+        }
+    
         # create results directory if it doesn't yet exist
+        if "." in results_path:
+            results_path, _ = results_path.split(".")
+
+        results_path = "/".join([results_path, method])
+        object_tracing_kwargs["results_path"] = results_path
         if not os.path.isdir(results_path):
             os.mkdir(results_path)
 
         # call relevant function based on the specified method
         if method == "gradient":
             # good for handling sharp edges
-            return traceObjectsInImage_gradient(origImage, results_path + "/" + method, mdl_no)
-        elif method == "texture":
+            return self.trace_objects_in_image_gradient(**object_tracing_kwargs)
+
+        if method == "texture":
             # good for handling blurred edges
-            return traceObjectsInImage_texture(origImage, results_path + "/" + method, mdl_no)
+            return self.trace_objects_in_image_texture(**object_tracing_kwargs)
         
         print("No edge detection method specified. Stopping code execution.")
         exit()
@@ -143,7 +154,7 @@ class ImageUtils(object):
         while not fully_nucleated:
             # update counter, classification label and create new list
             start_counter = end_counter
-            iter = iter + 1
+            iter += 1
 
             if timeIt:
                 t_prev = time.time()
@@ -237,7 +248,7 @@ class ImageUtils(object):
         return cluster_list, alive_direction, dead_direction
 
     # object tracing texture method
-    def traceObjectsInImage_texture(self, origImage, results_path = "results", model_no=""):
+    def trace_objects_in_image_texture(self, image=None, results_path="results", model_no=None):
         # create results/texture directory if it doesn't yet exist
         if not os.path.isdir(results_path):
             os.mkdir(results_path)
@@ -550,13 +561,16 @@ class ImageUtils(object):
             exit()
 
         # return an array of 0s (non-edges) and 1s (edges), same shape as passed in image
-        print("Is ",origImage.shape," = ",edge_array.shape,"?")
+        print("Is ",image.shape," = ",edge_array.shape,"?")
         return edge_array
 
-    # object tracing one-layer gradient method
-    def traceObjectsInImage_gradient(self, origImage, results_path = "results"):
+
+    def trace_objects_in_image_gradient(self, image=None, results_path=None, model_no=None):
+        '''
+        Object tracing one-layer gradient method
+        '''
         # gradImage: create numpy 2D array of size (2n-1) of the original
-        dimY, dimX, chanls = origImage.shape
+        dimY, dimX, chanls = image.shape
 
         # append an image (in x-direction) for each of the separate channels
         gradImage = np.zeros(shape=(2*chanls*(dimX-1),2*(dimY-1)))
@@ -573,13 +587,13 @@ class ImageUtils(object):
                         if j % 2 == 0:
                             # across adjacent pixels (top to bottom gradient)
                             # gradImage[i, j] = 0.9
-                            gradImage[i+x_offset, j] = (origImage[int(j / 2), int((i + 1) / 2)] - origImage[
+                            gradImage[i+x_offset, j] = (image[int(j / 2), int((i + 1) / 2)] - image[
                                 int(j / 2), int((i - 1) / 2)])[k]
                             # print("(j,i)=("+str(j)+","+str(i)+")"+"\t grad: ("+str(int(j/2))+","+str(int((i+1)/2))+")-("+str(int(j/2))+","+str(int((i-1)/2))+")")
                         else:
                             # across diagonal pixels (top-left to bottom-right gradient)
                             # gradImage[i, j] = 1.0
-                            gradImage[i+x_offset, j] = (origImage[int(j / 2) + 1, int((i + 1) / 2)] - origImage[
+                            gradImage[i+x_offset, j] = (image[int(j / 2) + 1, int((i + 1) / 2)] - image[
                                 int(j / 2), int((i - 1) / 2)])[k]
                             # print("(j,i)=(" + str(j) + "," + str(i) + ")" + "\t grad: (" + str(int(j / 2)+1) + "," + str(int((i + 1) / 2)) + ")-(" + str(int(j / 2)) + "," + str(int((i - 1) / 2)) + ")")
                     else:
@@ -587,12 +601,12 @@ class ImageUtils(object):
                         if j % 2 == 0:
                             # across adjacent pixels (left to right gradient)
                             # gradImage[i, j] = 0.1
-                            gradImage[i+x_offset, j] = (origImage[int(j / 2) + 1, int(i / 2)] - origImage[int(j / 2), int(i / 2)])[k]
+                            gradImage[i+x_offset, j] = (image[int(j / 2) + 1, int(i / 2)] - image[int(j / 2), int(i / 2)])[k]
                             # print("(j,i)=(" + str(j) + "," + str(i) + ")" + "\t grad: (" + str(int(j / 2) + 1) + "," + str(int(i / 2)) + ")-(" + str(int(j / 2)) + "," + str(int(i / 2)) + ")")
                         else:
                             # across diagonal pixels (top-right to bottom-left gradient)
                             # gradImage[i, j] = 0.0
-                            gradImage[i+x_offset, j] = (origImage[int(j / 2) + 1, int(i / 2)] - origImage[
+                            gradImage[i+x_offset, j] = (image[int(j / 2) + 1, int(i / 2)] - image[
                                 int(j / 2), int((i / 2) + 1)])[k]
                             # print("(j,i)=(" + str(j) + "," + str(i) + ")" + "\t grad: (" + str(int(j / 2) + 1) + "," + str(int(i / 2)) + ")-(" + str(int(j / 2)) + "," + str(int((i / 2)+1)) + ")")
 

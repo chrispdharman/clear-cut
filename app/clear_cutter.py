@@ -22,34 +22,41 @@ class ClearCut(ImageUtils):
 
 
     def default_image_selection(self):
+        self.timestamp_start = time.time()
+
         self.image_filename = "Bob.jpeg"
         self.image_filename = "colorful1.jpeg"
         #self.image_filename = "john1.jpg"
         #self.image_filename = "minimal1.jpg"
         #self.image_filename = "heathers_cats.jpg"
-        image_filepath = '/'.join([self.base_dir, self.image_filename])
-        self.image_raw = self.__upright_image(image_filepath)
+        self.image_filepath = '/'.join([self.base_dir, self.image_filename])
+        self.image_raw = self.__upright_image()
         self.image = np.array(self.image_raw)
         print("Image size: ", self.image.shape)
 
         self.results_filepath = '/'.join(
             ["results", self.__get_file_name(self.image_filename)]
         )
-        self.reduce_image_size()
+        self.__reduce_image_size()
 
 
-    def run():
+    def run(self):
 
         # MAKE AS FUNCTION PASSING IN AND RETURNING pdict
         # execute clearCut method and store in edge array for masking
-        edgy_images = traceObjectsInImage(image, method = "texture", results_path = img_path, mdl_no = timestamp_start) # later think about implementing different methods as an argument
-        #edgy_images = traceObjectsInImage(image, method= "gradient")
+        edgy_images = self.trace_objects_in_image(
+            image=self.image,
+            method="gradient",
+            results_path="/".join(["app/results", self.image_filename]),
+            model_no=self.timestamp_start,
+        ) # later think about implementing different methods as an argument
+        #edgy_images = trace_objects_in_image(image, method= "gradient")
 
         # remove edge pixels that cannot possibly contain an edge (may need to change order with edgeFiller?)
-        edgy_images = edgeKiller(edgy_images, objectTolerance = 4)
+        edgy_images = self.edgeKiller(edgy_images, objectTolerance=4)
 
         # use direction bias to fill in between edge pixels (possible edges)
-        edgy_images = edgeFiller(edgy_images, edge_bias = 10)
+        edgy_images = self.edgeFiller(edgy_images, edge_bias=10)
         #plt.figure()
         #plt.imshow(edgy_images > 0.)
         #plt.show()
@@ -159,7 +166,7 @@ class ClearCut(ImageUtils):
 
         # check if the image is too small to be pooled, then pool the image
         #while img_mean(image.shape) > 500:
-        k=0
+        k = 0
         while self.img_mean(self.image.shape) > 300:
             # calculate the smallest kernel size that fits into the image
             krn_h, krn_w, image = self.calculate_kernel_size(self.image)
@@ -192,12 +199,12 @@ class ClearCut(ImageUtils):
         #plt.clf()
 
 
-    def __upright_image(self, image_filepath):
+    def __upright_image(self):
         '''
         Check for image orientation in exif data. See reference
         https://stackoverflow.com/questions/4228530/pil-thumbnail-is-rotating-my-image
         '''
-        image = Image.open(image_filepath)
+        image = Image.open(self.image_filepath)
         if image._getexif() is not None:
             exif = dict(
                 (ExifTags.TAGS[k], v)
@@ -208,5 +215,6 @@ class ClearCut(ImageUtils):
                 image = np.rot90(np.rot90(image))
         return image
 
-clear_cutter = ClearCut()
-clear_cutter.run()
+
+clear_cut = ClearCut()
+clear_cut.run()
