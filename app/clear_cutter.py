@@ -1,12 +1,13 @@
 import time
 import numpy as np
-from PIL import Image, ExifTags
-from random import randint
-
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+
+from PIL import Image, ExifTags
+from random import randint
+from skimage.measure import block_reduce
 #import tensorflow as tf
 #from tensorflow.examples.tutorials.mnist import input_data
 
@@ -35,57 +36,6 @@ class ClearCut(ImageUtils):
             ["results", self.__get_file_name(self.image_filename)]
         )
         self.reduce_image_size()
-    
-
-    def reduce_image_size(self):
-
-        # create dictionary to store the history of pooled images
-        pdict = {
-            'image': {
-                'height': [image.shape[0]],
-                'width': [image.shape[1]],
-            },
-            'kernel': {
-                'height': ['N/A'],
-                'width': ['N/A'],
-            },
-        }
-
-        # check if the image is too small to be pooled, then pool the image
-        #while img_mean(image.shape) > 500:
-        while img_mean(image.shape) > 300:
-            # calculate the smallest kernel size that fits into the image
-            krn_h, krn_w, image = self.calculate_kernel_size(image)
-            #print("krn_h=", krn_h, ", krn_w=", krn_w)
-
-            # reduce image size, given calculated kernel (max pooling)
-            image = block_reduce(image, (krn_h, krn_w, 1), np.max)
-            #print("New shape=",image.shape)
-
-            # update dictionary
-            pdict['im_h' + str(k)], pdict['im_w' + str(k)], _ = image.shape
-            pdict['im_kern_h' + str(k)], pdict['im_kern_w' + str(k)] = krn_h, krn_w
-        # note that the final k is stored in "k"
-
-        # print dictionary
-        for key, value in pdict.items():
-            #print(key,": \t",value)
-            continue
-
-        # View raw image
-        '''plt.figure()
-        plt.imshow(image)
-
-        # View rgb channels
-        plt.figure()
-        plt.imshow(np.rot90(
-            np.concatenate((np.concatenate((rotIm(image[:, :, 0]), rotIm(image[:, :, 1]))), rotIm(image[:, :, 2])))))'''
-
-        # view a specific image of the data
-        #plt.figure()
-        #plt.imshow(train_data[3].reshape(28, 28))
-        #plt.show()
-        #plt.clf()
 
 
     def run():
@@ -193,19 +143,69 @@ class ClearCut(ImageUtils):
         #test_labels = np.asarray(mnist.test.labels, dtype=np.int32)
 
 
+    def __reduce_image_size(self):
+
+        # create dictionary to store the history of pooled images
+        pdict = {
+            'image': {
+                'height': [self.image.shape[0]],
+                'width': [self.image.shape[1]],
+            },
+            'kernel': {
+                'height': ['N/A'],
+                'width': ['N/A'],
+            },
+        }
+
+        # check if the image is too small to be pooled, then pool the image
+        #while img_mean(image.shape) > 500:
+        k=0
+        while self.img_mean(self.image.shape) > 300:
+            # calculate the smallest kernel size that fits into the image
+            krn_h, krn_w, image = self.calculate_kernel_size(self.image)
+            #print("krn_h=", krn_h, ", krn_w=", krn_w)
+
+            # reduce image size, given calculated kernel (max pooling)
+            self.image = block_reduce(image, (krn_h, krn_w, 1), np.max)
+            print("New shape=",self.image.shape)
+
+            # update dictionary
+            pdict['im_h' + str(k)], pdict['im_w' + str(k)], _ = self.image.shape
+            pdict['im_kern_h' + str(k)], pdict['im_kern_w' + str(k)] = krn_h, krn_w
+            
+            k += 1
+        # note that the final k is stored in "k"
+
+        # View raw image
+        '''plt.figure()
+        plt.imshow(image)
+
+        # View rgb channels
+        plt.figure()
+        plt.imshow(np.rot90(
+            np.concatenate((np.concatenate((rotIm(image[:, :, 0]), rotIm(image[:, :, 1]))), rotIm(image[:, :, 2])))))'''
+
+        # view a specific image of the data
+        #plt.figure()
+        #plt.imshow(train_data[3].reshape(28, 28))
+        #plt.show()
+        #plt.clf()
+
+
     def __upright_image(self, image_filepath):
         '''
         Check for image orientation in exif data. See reference
         https://stackoverflow.com/questions/4228530/pil-thumbnail-is-rotating-my-image
         '''
         image = Image.open(image_filepath)
-        exif = dict(
-            (ExifTags.TAGS[k], v)
-            for k, v in self.image_raw._getexif().items()
-            if k in ExifTags.TAGS
-        )
-        if exif['Orientation'] == 3:
-            image = np.rot90(np.rot90(image))
+        if image._getexif() is not None:
+            exif = dict(
+                (ExifTags.TAGS[k], v)
+                for k, v in image._getexif().items()
+                if k in ExifTags.TAGS
+            )
+            if exif['Orientation'] == 3:
+                image = np.rot90(np.rot90(image))
         return image
 
 clear_cutter = ClearCut()

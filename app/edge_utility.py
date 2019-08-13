@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn import svm
-from skimage.measure import block_reduce
 
 
 class ImageUtils(object):
@@ -1166,4 +1165,3 @@ class ImageUtils(object):
         plt.figure()
         plt.imshow(edgy_images + edge_path_img)
         plt.show()
-        
