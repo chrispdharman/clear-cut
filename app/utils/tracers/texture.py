@@ -1,6 +1,6 @@
 import os
 
-from base import BaseTracer 
+from utils.tracers.base import BaseTracer
 
 
 class TextureTracer(BaseTracer):
@@ -8,7 +8,6 @@ class TextureTracer(BaseTracer):
     def trace_objects_in_image(self, image=None, results_path=None, model_no=None):
         
         # object tracing texture method
-    def trace_objects_in_image_texture(self, image=None, results_path="results", model_no=None):
         # create results/texture directory if it doesn't yet exist
         if not os.path.isdir(results_path):
             os.mkdir(results_path)

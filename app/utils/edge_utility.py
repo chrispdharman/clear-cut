@@ -2,7 +2,6 @@ import os
 import sys
 import csv
 import time
-import pydoc
 import math
 import numpy as np
 from random import randint
@@ -22,18 +21,8 @@ class ImageUtils(object):
         self.time_nucleation = False
         self.time_counter = False
 
-        self._tracer = None
-
         # increase csv file size limit
         csv.field_size_limit(sys.maxsize)
-
-    @property
-    def tracer(self, method="gradient"):
-        if not self._tracer:
-            method = str.capitalize(method)
-            Tracer = pydoc.locate('utils.tracers.{}Tracer'.format(method))
-            self._tracer = Tracer()
-        return self._tracer
 
     def cluster_counter(self, chosen_one, pxl_list, R = 10, return_count = False):
         '''

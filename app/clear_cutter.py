@@ -1,3 +1,4 @@
+import pydoc
 import time
 import numpy as np
 import matplotlib
@@ -11,7 +12,7 @@ from skimage.measure import block_reduce
 #import tensorflow as tf
 #from tensorflow.examples.tutorials.mnist import input_data
 
-from edge_utility import ImageUtils
+from utils.edge_utility import ImageUtils
 
 
 class ClearCut(ImageUtils):
@@ -19,6 +20,17 @@ class ClearCut(ImageUtils):
     def __init__(self):
         self.base_dir = "app/images"
         self.default_image_selection()
+
+        self._tracer = None
+    
+    @property
+    def tracer(self, method="gradient"):
+        if not self._tracer:
+            Tracer = pydoc.locate('utils.tracers.{}.{}Tracer'.format(
+                method, str.capitalize(method)
+            ))
+            self._tracer = Tracer()
+        return self._tracer
 
     def default_image_selection(self):
         self.image_filename = "Bob.jpeg"

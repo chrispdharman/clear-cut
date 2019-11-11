@@ -14,25 +14,23 @@ class BaseTracer(object):
         """
         Merge gradImage RGB channels to one image
         """
-        # make image of correct shape
+        # Make image of correct shape
         xDim, yDim, chnls = origShape
-        #print("xDim= ",xDim,", yDim=",yDim)
-        #print("grdImg.shape=",grdImg.shape)
 
-        # create empty array on the size of a single channel gradImage
+        # Create empty array on the size of a single channel gradImage
         mrgdImg = np.zeros(shape=(2 * (xDim - 1), 2 * (yDim - 1)))
-        #print("mrgdImg.shape=",mrgdImg.shape)
 
         # loop over each dimension, populating the gradient image
-        x_offset = 2*(yDim-1)
-        #x_offset = 2 * (yDim - 1)
+        x_offset = 2 * (yDim - 1)
         for i in range(0, 2 * (xDim - 1)):
-            #print("i=", i)
             for j in range(0, 2 * (yDim - 1)):
-                #print("i=", i, ", j=", j)
-                mrgdImg[i,j] = (grdImg[i,j] + grdImg[i,j+ x_offset] + grdImg[i,j + 2*x_offset])/3
+                mrgdImg[i,j] = (
+                    grdImg[i, j]
+                    + grdImg[i, j + x_offset]
+                    + grdImg[i, j + 2 * x_offset]
+                )/3
 
-        # reduce gradient array to original image shape. Max pool gradient array using 2x2 kernel
+        # Reduce gradient array to original image shape. Max pool gradient array using 2x2 kernel
         return block_reduce(mrgdImg, (2, 2), np.max)
         
     def _get_or_create_results_dir(self, results_path, method):
