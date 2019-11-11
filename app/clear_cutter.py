@@ -20,10 +20,7 @@ class ClearCut(ImageUtils):
         self.base_dir = "app/images"
         self.default_image_selection()
 
-
     def default_image_selection(self):
-        self.timestamp_start = time.time()
-
         self.image_filename = "Bob.jpeg"
         self.image_filename = "colorful1.jpeg"
         #self.image_filename = "john1.jpg"
@@ -39,18 +36,10 @@ class ClearCut(ImageUtils):
         )
         self.__reduce_image_size()
 
-
     def run(self):
-
         # MAKE AS FUNCTION PASSING IN AND RETURNING pdict
         # execute clearCut method and store in edge array for masking
-        edgy_images = self.trace_objects_in_image(
-            image=self.image,
-            method="gradient",
-            results_path="/".join(["app/results", self.image_filename]),
-            model_no=self.timestamp_start,
-        ) # later think about implementing different methods as an argument
-        #edgy_images = trace_objects_in_image(image, method= "gradient")
+        edgy_images = self.tracer.trace_objects_in_image(image=self.image)
 
         # remove edge pixels that cannot possibly contain an edge (may need to change order with edgeFiller?)
         edgy_images = self.edgeKiller(edgy_images, objectTolerance=4)
@@ -129,14 +118,12 @@ class ClearCut(ImageUtils):
         plt.imshow(train_data[randint(0, train_data.shape[0])].reshape(28, 28))
         plt.show()
 
-
     def __get_file_name(self, filename):
         '''
         Get file name, removing file extension
         '''
         name, _ = filename.split('.')
         return name
-
 
     def __get_trained_model(self):
         '''
@@ -148,7 +135,6 @@ class ClearCut(ImageUtils):
         #train_labels = np.asarray(mnist.train.labels, dtype=np.int32)
         #test_data = mnist.test.images
         #test_labels = np.asarray(mnist.test.labels, dtype=np.int32)
-
 
     def __reduce_image_size(self):
 

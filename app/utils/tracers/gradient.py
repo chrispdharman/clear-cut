@@ -7,7 +7,8 @@ from base import BaseTracer
 
 
 class GradientTracer(BaseTracer):
-
+    
+    # model_no is just a unique timestamp, i.e. model_no = time.time()
     def trace_objects_in_image(self, image=None, results_path=None, model_no=None):
         '''
         Object tracing one-layer gradient method
@@ -20,38 +21,28 @@ class GradientTracer(BaseTracer):
 
         # loop over each dimension, populating the gradient image
         for k in range(0, chanls):
+            # This offset deals with the initial point of each r, g, or b image in the "grid"
             x_offset = 2 * k * (dimX-1)
+
             for i in range(0, 2 * (dimX - 1)):
                 for j in range(0, 2 * (dimY - 1)):
                     #print("i=",i,", j=",j)
                     if i % 2 == 1:
-                        # across odd numbered rows
-                        # grad_image[i, j] = origImage[int(i / 2), int(j / 2)] - origImage[int(i - 1 / 2), int(j / 2)]
-                        if j % 2 == 0:
-                            # across adjacent pixels (top to bottom gradient)
-                            # grad_image[i, j] = 0.9
-                            grad_image[i + x_offset, j] = (image[int(j / 2), int((i + 1) / 2)] - image[
-                                int(j / 2), int((i - 1) / 2)])[k]
-                            # print("(j,i)=("+str(j)+","+str(i)+")"+"\t grad: ("+str(int(j/2))+","+str(int((i+1)/2))+")-("+str(int(j/2))+","+str(int((i-1)/2))+")")
-                        else:
-                            # across diagonal pixels (top-left to bottom-right gradient)
-                            # grad_image[i, j] = 1.0
-                            grad_image[i+x_offset, j] = (image[int(j / 2) + 1, int((i + 1) / 2)] - image[
-                                int(j / 2), int((i - 1) / 2)])[k]
-                            # print("(j,i)=(" + str(j) + "," + str(i) + ")" + "\t grad: (" + str(int(j / 2)+1) + "," + str(int((i + 1) / 2)) + ")-(" + str(int(j / 2)) + "," + str(int((i - 1) / 2)) + ")")
+                        # across odd numbered rows and ...
+                        # ... adjacent pixels (top to bottom gradient)
+                        # ... diagonal pixels (top-left to bottom-right gradient)
+                        grad_image[i + x_offset, j] = (
+                            image[int(j / 2) + (j % 2), int((i + 1) / 2)]
+                            - image[int(j / 2), int((i - 1) / 2)]
+                        )[k]
                     else:
-                        # across even numbered rows
-                        if j % 2 == 0:
-                            # across adjacent pixels (left to right gradient)
-                            # grad_image[i, j] = 0.1
-                            grad_image[i+x_offset, j] = (image[int(j / 2) + 1, int(i / 2)] - image[int(j / 2), int(i / 2)])[k]
-                            # print("(j,i)=(" + str(j) + "," + str(i) + ")" + "\t grad: (" + str(int(j / 2) + 1) + "," + str(int(i / 2)) + ")-(" + str(int(j / 2)) + "," + str(int(i / 2)) + ")")
-                        else:
-                            # across diagonal pixels (top-right to bottom-left gradient)
-                            # grad_image[i, j] = 0.0
-                            grad_image[i+x_offset, j] = (image[int(j / 2) + 1, int(i / 2)] - image[
-                                int(j / 2), int((i / 2) + 1)])[k]
-                            # print("(j,i)=(" + str(j) + "," + str(i) + ")" + "\t grad: (" + str(int(j / 2) + 1) + "," + str(int(i / 2)) + ")-(" + str(int(j / 2)) + "," + str(int((i / 2)+1)) + ")")
+                        # across even numbered rows and ...
+                        # ... adjacent pixels (left to right gradient)
+                        # ... diagonal pixels (top-right to bottom-left gradient)
+                        grad_image[i + x_offset, j] = (
+                            image[int(j / 2) + 1, int(i / 2)]
+                            - image[int(j / 2), int((i / 2) + (j % 2))]
+                        )[k]
 
         # Too small (shapes distinct but too much noise): 0.02
         # Maybe right? 0.07 (Bob.jpeg)
