@@ -286,7 +286,7 @@ class ImageUtils(object):
         else:
             return pxl
 
-    def edgeKill(self, edg_img, coord, radius, task = "border-count"):
+    def edge_kill(self, edg_img, coord, radius, task = "border-count"):
         #print("@", coord)
 
         # initial counter and pre-define useful values
@@ -333,7 +333,7 @@ class ImageUtils(object):
                                                                                 edg_img.shape[1])])
                 plt.show()
             '''
-            edg_img = edgeKill(edg_img, coord, radius = (radius - 1), task = "wipe-edges")
+            edg_img = edge_kill(edg_img, coord, radius = (radius - 1), task = "wipe-edges")
 
         '''
         # for debug
@@ -349,21 +349,23 @@ class ImageUtils(object):
         '''
         return edg_img
 
-    # determine positions of edge vectors, return (? x 2) array.
-    def edgeKiller(self, edge_img, objectTolerance = 1):
-        # iterate through pixels distance from chosen edge pixel, going up to the specified objectTolerance value
+    def edge_killer(self, edge_img, objectTolerance=1):
+        """
+        Determine positions of edge vectors, return (? x 2) array.
+        """
+        # Iterate through pixels distance from chosen edge pixel, going up to the specified objectTolerance value
         for r in range(1, objectTolerance):
-            ## improve by returning coordinates to kill, instead of the whole edge image
+            ## can improve by returning coordinates to kill, instead of the whole edge image
             # iterate through edge pixels (updated edge_pos vector)
             edge_pos = edgePxlPos(edge_img)
             for k in range(0, edge_pos.shape[0]):
-                edge_img = edgeKill(edge_img, edge_pos[k], radius = r)
+                edge_img = edge_kill(edge_img, edge_pos[k], radius=r)
         return edge_img
 
     # determine positions of edge vectors, return (? x 2) array.
     # edge_bias details how many edge pixels must be adjacent in ...
     # ... the same direction before considering it an extendable edge
-    def edgeFiller(self, edge_img, edge_bias = 10):
+    def edge_filler(self, edge_img, edge_bias = 10):
         edge_pos = edgePxlPos(edge_img)
         # iterate through edge pixels
         for k in range(0, edge_pos.shape[0]):

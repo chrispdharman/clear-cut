@@ -54,10 +54,10 @@ class ClearCut(ImageUtils):
         edgy_images = self.tracer.trace_objects_in_image(image=self.image)
 
         # remove edge pixels that cannot possibly contain an edge (may need to change order with edgeFiller?)
-        edgy_images = self.edgeKiller(edgy_images, objectTolerance=4)
+        edgy_images = self.edge_killer(edgy_images, objectTolerance=4)
 
         # use direction bias to fill in between edge pixels (possible edges)
-        edgy_images = self.edgeFiller(edgy_images, edge_bias=10)
+        edgy_images = self.edge_filler(edgy_images, edge_bias=10)
         #plt.figure()
         #plt.imshow(edgy_images > 0.)
         #plt.show()
