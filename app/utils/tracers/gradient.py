@@ -57,9 +57,7 @@ class GradientTracer(BaseTracer):
         
         edge_array = self.tidy_edge_image_edges(
             self.merge_channels_of_traced_image(
-                np.multiply(
-                    (np.absolute(grad_image.T) < (1 - image_cut) * 255),
-                    (np.absolute(grad_image.T) > image_cut * 255)),
+                self.trimmed_image(grad_image, image_cut=image_cut),
                 image_shape
             ),
             image_shape=image_shape
@@ -111,3 +109,12 @@ class GradientTracer(BaseTracer):
             raise Exception("Gained columns in compressing gradient. Doesn't make sense!")
 
         return edge_array
+    
+    def trimmed_image(self, grad_image, image_cut=None):
+        """
+        Removes all edge pixels that have "too flat" a gradient
+        """
+        return np.multiply(
+            (np.absolute(grad_image.T) < (1 - image_cut) * 255),
+            (np.absolute(grad_image.T) > image_cut * 255)
+        )
