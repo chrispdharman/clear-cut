@@ -297,7 +297,7 @@ class ImageUtils(object):
             dy = (i // border_size) - radius
             
             x = coord[0] + dx
-            y = coord[0] + dy
+            y = coord[1] + dy
             
             if task == "wipe-edges":
                 # remove all edge pixels --> change to non-edge pixels
