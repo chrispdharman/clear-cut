@@ -49,14 +49,14 @@ class ClearCut(ImageUtils):
         self.__reduce_image_size()
 
     def run(self):
-        # MAKE AS FUNCTION PASSING IN AND RETURNING pdict
-        # execute clearCut method and store in edge array for masking
+        # Determine segmentation edges of the image (default method = gradient)
         edgy_images = self.tracer.trace_objects_in_image(image=self.image)
 
-        # remove edge pixels that cannot possibly contain an edge (may need to change order with edgeFiller?)
-        edgy_images = self.edge_killer(edgy_images, objectTolerance=4)
+        # Remove noise (edge pixels that cannot possibly contain an edge)
+        # TODO: may need to change order with edgeFiller?
+        edgy_images = self.edge_killer(edgy_images, pixel_tolerance=4)
 
-        # use direction bias to fill in between edge pixels (possible edges)
+        # Use direction bias to fill in between edge pixels (to make image clearer)
         edgy_images = self.edge_filler(edgy_images, edge_bias=10)
         #plt.figure()
         #plt.imshow(edgy_images > 0.)

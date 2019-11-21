@@ -260,21 +260,20 @@ class ImageUtils(object):
             new_image = im[:im.shape[0]-1, :im.shape[1]-1, :]
         return new_image
 
-    # determine positions of edge vectors, return (? x 2) array
-    def edgePxlPos(self, edge_img, border = 0):
-        pos_vec = []
+    def edge_pixel_positions(self, edge_img, border = 0):
+        """
+        Determine coordinates of edge pixels.
+        :return: (N x 2) numpy array, where N is the number of edge pixels.
+        """
+        edge_coordinates = []
         shape = edge_img.shape
-        #print("Edge shape=",shape)
-        #print("edge_img=",edge_img)
-        for i in range(0,shape[0]):
-            for j in range(0,shape[1]):
+        for i in range(0, shape[0]):
+            for j in range(0, shape[1]):
                 if edge_img[i,j] > 0.:
                     #print("edge_img[i,j]=",edge_img[i,j])
-                    pos_vec.append([i,j])
-        pos_vec = np.array(pos_vec)
-        #print("Array: ",pos_vec)
-        #print("Shape: ",pos_vec.shape)
-        return pos_vec
+                    edge_coordinates.append([i,j])
+        
+        return np.array(edge_coordinates)
 
     # return pxl at perimeter if you go out of bounds
     def protPxl(self, pxl, max_cap):
@@ -286,42 +285,45 @@ class ImageUtils(object):
         else:
             return pxl
 
-    def edge_kill(self, edg_img, coord, radius, task = "border-count"):
-        #print("@", coord)
-
-        # initial counter and pre-define useful values
+    def edge_kill(self, edg_img, coord, radius, task="border-count"):
+        # Initial counter and pre-define useful values
         count = 0
-        border_size = 2*radius + 1
+        pixel_out_of_image = 0
+        border_size = 2 * radius + 1
 
-        # run over the square of pixels surrounding "radius"-pixels around coord
+        # Run over the square of pixels surrounding "radius"-pixels around coord
         for i in range(0, border_size**2):
             dx = (i % border_size) - radius
             dy = (i // border_size) - radius
-            #print("-->(",coord[0]+dx,",",coord[1]+dy,")")
+            
+            x = coord[0] + dx
+            y = coord[0] + dy
+            
             if task == "wipe-edges":
                 # remove all edge pixels --> change to non-edge pixels
-                edg_img[coord[0]+dx, coord[1]+dy] = 0.
-                #print("killing (",coord[0]+dx,",",coord[1]+dy,")")
+                edg_img[x, y] = 0.
+                
             elif task == "border-count":
-                # make sure we are looking at a border pixel
+                # Validate sure we are looking at a border pixel
                 if np.abs(dx)==radius or np.abs(dy)==radius :
                     try:
-                        if edg_img[coord[0]+dx, coord[1]+dy] == 0.:
-                            # increment count by 1 to say we found another non-edge pixel on the border
-                            count = count + 1
+                        if edg_img[x, y] == 0.:
+                            # Found a non-edge pixel on the border
+                            count += 1
                         else:
-                            # break out of the for loop if we find an edge on the border (return the original edge image)
-                            #print("Broke because border pixel has value ",edg_img[coord[0]+dx, coord[1]+dy])
+                            # Found an edge pixel on the border (return the original edge image)
                             break
+
                     except IndexError:
-                        # the central edge pixel is too close to the image perimeter
-                        continue
+                        # The central edge pixel is too close to the image perimeter
+                        pixel_out_of_image += 1
+
             else:
                 print("Task is not specified. Stopping the code...")
                 exit()
 
         # check if the border is all non-edge
-        if count == (8*radius):
+        if count == (8 * radius) - pixel_out_of_image:
             #print("Border is all non-edge")
             '''
             # for debug
@@ -349,18 +351,20 @@ class ImageUtils(object):
         '''
         return edg_img
 
-    def edge_killer(self, edge_img, objectTolerance=1):
+    def edge_killer(self, edge_image, pixel_tolerance=1):
         """
-        Determine positions of edge vectors, return (? x 2) array.
+        Iterate through pixels distance from chosen edge pixel, going up to the specified pixel_tolerance value.
         """
-        # Iterate through pixels distance from chosen edge pixel, going up to the specified objectTolerance value
-        for r in range(1, objectTolerance):
-            ## can improve by returning coordinates to kill, instead of the whole edge image
-            # iterate through edge pixels (updated edge_pos vector)
-            edge_pos = edgePxlPos(edge_img)
-            for k in range(0, edge_pos.shape[0]):
-                edge_img = edge_kill(edge_img, edge_pos[k], radius=r)
-        return edge_img
+        for r in range(1, pixel_tolerance):
+            # Iterate through edge pixels (updated edge_pos vector)
+            # TODO: can improve by returning coordinates to kill, instead of the whole edge image
+            edge_coordinates = edge_pixel_positions(edge_image)
+            number_of_edge_pixels = edge_coordinates.shape[0]
+
+            for k in range(0, number_of_edge_pixels):
+                edge_image = edge_kill(edge_image, edge_coordinates[k], radius=r)
+
+        return edge_image
 
     # determine positions of edge vectors, return (? x 2) array.
     # edge_bias details how many edge pixels must be adjacent in ...
