@@ -56,6 +56,12 @@ class ClearCut(ImageUtils):
         # TODO: may need to change order with edgeFiller?
         edgy_images = self.edge_killer(edgy_images, pixel_tolerance=4)
 
+        # Draw noise-reduced image
+        # Display merged rgb gradient image with cutoff applied
+        plt.figure()
+        plt.imshow(edgy_images)
+        plt.savefig('{}/noise_reduced_image.png'.format(self.tracer.results_path))
+
         # Use direction bias to fill in between edge pixels (to make image clearer)
         edgy_images = self.edge_filler(edgy_images, edge_bias=10)
         #plt.figure()

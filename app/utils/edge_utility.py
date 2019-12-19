@@ -285,53 +285,72 @@ class ImageUtils(object):
         else:
             return pxl
 
-    def edge_kill(self, edg_img, coord, radius):
+    def edge_kill(self, edg_img, coord, radius, wipe=False):
         """
-        Return a (killing) vector of pixels to kill
+        Determine whether the "shells border" are all non-edge pixels or not
         """
+        # This may have already been wiped
+        if not edg_img[coord[0], coord[1]]:
+            if wipe:
+                return edg_img
+
+            return True
+
         # Initial counter and pre-define useful values
         border_size = 2 * radius + 1
-        killing_vector = []
 
-        # Run over the square of pixels surrounding "radius"-pixels around coord
+        # Run over the square of pixels surrounding "radius" pixels around coord
         for i in range(0, border_size**2):
             dx = (i % border_size) - radius
             dy = (i // border_size) - radius
-            
+
             x = coord[0] + dx
             y = coord[1] + dy
-                
+
+            if wipe:
+                # Wipe whole shell of edge pixels
+                try:
+                    edge_img[x, y] = 0
+                except IndexError:
+                    # The central edge pixel is too close to the image perimeter, so ignore it
+                    pass
+
+                continue
+
+            # Skip the inner shell pixels, just run around the border
+            if abs(dx) != radius and abs(dy) != radius:
+                continue
+            
             try:
                 if edg_img[x, y] > 0.:
-                    # Found an edge pixel on the border
-                    # Thus don't flag any pixels as being needed to kill
-                    return []
+                    # Found an edge pixel on the border, thus we cannot wipe this shell
+                    return False
                 
             except IndexError:
-                # The central edge pixel is too close to the image perimeter
+                # The central edge pixel is too close to the image perimeter, so ignore it
                 continue
-        
-            # Everything within this border should be flagged as killable
-            killing_vector.append([x, y])
 
-        # If we got here, all border pixels must be non-edge pixels.
-        return killing_vector
+        if wipe:
+            return edg_img
+
+        # If we got here, all border pixels must be non-edge pixels
+        return True
 
     def edge_killer(self, edge_image, pixel_tolerance=1):
         """
-        Check and wipe out any edge pixels found within a pixel_tolerance radius around the .
+        Check and wipe out any edge pixels found within a pixel_tolerance radius.
+        We refer to the radius of surround pixels as "the shell".
         """
         edge_coordinates = self.edge_pixel_positions(edge_image)
         number_of_edge_pixels = edge_coordinates.shape[0]
 
-        pixels_to_kill = []
-        for k in range(0, number_of_edge_pixels):
-            pixels_to_kill.extend(
-                self.edge_kill(edge_image, edge_coordinates[k], radius=pixel_tolerance)
-            )
-
-        for pixel_to_kill in pixels_to_kill:
-            pass
+        for edge_coordinate in edge_coordinates:
+            for sub_radius in reversed(range(0, pixel_tolerance + 1)):
+                noisy_shell_found = self.edge_kill(edge_image, edge_coordinate, radius=sub_radius)
+                if noisy_shell_found:
+                    break
+            
+            edge_image = self.edge_kill(edge_image, edge_coordinate, radius=sub_radius-1, wipe=True)
 
         return edge_image
 
