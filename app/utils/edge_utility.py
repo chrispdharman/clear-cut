@@ -310,7 +310,7 @@ class ImageUtils(object):
             if wipe:
                 # Wipe whole shell of edge pixels
                 try:
-                    edge_img[x, y] = 0
+                    edg_img[x, y] = 0
                 except IndexError:
                     # The central edge pixel is too close to the image perimeter, so ignore it
                     pass
@@ -342,15 +342,14 @@ class ImageUtils(object):
         We refer to the radius of surround pixels as "the shell".
         """
         edge_coordinates = self.edge_pixel_positions(edge_image)
-        number_of_edge_pixels = edge_coordinates.shape[0]
 
         for edge_coordinate in edge_coordinates:
-            for sub_radius in reversed(range(0, pixel_tolerance + 1)):
+            # Iterate over each layer of the shell (r --> r - 1 decrements)
+            for sub_radius in reversed(range(1, pixel_tolerance + 1)):
                 noisy_shell_found = self.edge_kill(edge_image, edge_coordinate, radius=sub_radius)
                 if noisy_shell_found:
+                    edge_image = self.edge_kill(edge_image, edge_coordinate, radius=sub_radius-1, wipe=True)
                     break
-            
-            edge_image = self.edge_kill(edge_image, edge_coordinate, radius=sub_radius-1, wipe=True)
 
         return edge_image
 
