@@ -169,9 +169,10 @@ class ClearCut(ImageUtils):
         }
 
         # check if the image is too small to be pooled, then pool the image
-        #while img_mean(image.shape) > 300:
         k = 0
-        while self.img_mean(self.image.shape) > 500:
+        #while self.img_mean(self.image.shape) > 300:
+        #while self.img_mean(self.image.shape) > 600:
+        while self.img_mean(self.image.shape) > 900:
             # calculate the smallest kernel size that fits into the image
             krn_h, krn_w, image = self.calculate_kernel_size(self.image)
             #print("krn_h=", krn_h, ", krn_w=", krn_w)
