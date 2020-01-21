@@ -35,7 +35,7 @@ class ClearCut(ImageUtils):
     def default_image_selection(self):
         self.image_filename = "Bob.jpeg"
         self.image_filename = "colorful1.jpeg"
-        #self.image_filename = "john1.jpg"
+        self.image_filename = "john1.jpg"
         #self.image_filename = "minimal1.jpg"
         #self.image_filename = "heathers_cats.jpg"
         self.image_filepath = '/'.join([self.base_dir, self.image_filename])
@@ -170,9 +170,8 @@ class ClearCut(ImageUtils):
 
         # check if the image is too small to be pooled, then pool the image
         k = 0
-        #while self.img_mean(self.image.shape) > 300:
+        while self.img_mean(self.image.shape) > 400:
         #while self.img_mean(self.image.shape) > 600:
-        while self.img_mean(self.image.shape) > 900:
             # calculate the smallest kernel size that fits into the image
             krn_h, krn_w, image = self.calculate_kernel_size(self.image)
             #print("krn_h=", krn_h, ", krn_w=", krn_w)
