@@ -67,23 +67,23 @@ class GradientTracer(BaseTracer):
             # Display separate rgb gradient images without cutoff applied
             plt.figure()
             plt.imshow(np.absolute(grad_image.T), interpolation="nearest")
-            plt.savefig('{}/gradient_image_raw.png'.format(self.results_path))
+            plt.savefig('{}/0003_gradient_image_raw.png'.format(self.results_path))
 
             # Display separate rgb gradient images with cutoff applied
             plt.figure()
             plt.imshow(np.multiply((np.absolute(grad_image.T) < (1-image_cut)*255),(np.absolute(grad_image.T) > image_cut*255)))
-            plt.savefig('{}/gradient_image_cut.png'.format(self.results_path))
+            plt.savefig('{}/0004_gradient_image_cut.png'.format(self.results_path))
 
             # Display merged rgb gradient image without cutoff applied
             mrgIm1 = self.merge_channels_of_traced_image(grad_image.T, image_shape)
             plt.figure()
             plt.imshow(mrgIm1)
-            plt.savefig('{}/merged_image_raw.png'.format(self.results_path))
+            plt.savefig('{}/0005_merged_image_raw.png'.format(self.results_path))
             
             # Display merged rgb gradient image with cutoff applied
             plt.figure()
             plt.imshow(edge_array)
-            plt.savefig('{}/merged_image_cut.png'.format(self.results_path))
+            plt.savefig('{}/0006_merged_image_cut.png'.format(self.results_path))
 
         return edge_array
 

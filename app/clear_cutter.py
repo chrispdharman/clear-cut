@@ -61,7 +61,7 @@ class ClearCut(ImageUtils):
         # Display merged rgb gradient image with cutoff applied
         plt.figure()
         plt.imshow(edgy_images)
-        plt.savefig('{}/noise_reduced_image.png'.format(self.tracer.results_path))
+        plt.savefig('{}/0007_noise_reduced_image.png'.format(self.tracer.results_path))
 
     def __get_file_name(self, filename):
         '''
@@ -99,7 +99,7 @@ class ClearCut(ImageUtils):
             # View raw image
             plt.figure()
             plt.imshow(image)
-            plt.savefig('{}/size_reduced_image.png'.format(self.tracer.results_path))
+            plt.savefig('{}/0001_size_reduced_image.png'.format(self.tracer.results_path))
 
             # View rgb channels
             plt.figure()
@@ -118,7 +118,7 @@ class ClearCut(ImageUtils):
                     )
                 )
             )
-            plt.savefig('{}/size_reduced_image_channel_collage.png'.format(self.tracer.results_path))
+            plt.savefig('{}/0002_size_reduced_image_channel_collage.png'.format(self.tracer.results_path))
 
     def __upright_image(self):
         '''
