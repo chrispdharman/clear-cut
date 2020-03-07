@@ -209,8 +209,8 @@ class ImageUtils(object):
         return cluster_list, alive_direction, dead_direction
 
     # def rotate image 90 deg CW shortcut
-    def rotIm(self, img):
-        return np.rot90(img, 1, (1,0))
+    def rot90_CW(self, image):
+        return np.rot90(image, -1)
 
     # function to calculate the smallest kernel size for th given image
     def calculate_kernel_size(self, img):
@@ -227,7 +227,7 @@ class ImageUtils(object):
                 print("Error: the image height is a prime number. Cannot determine pooling kernel size.")
 
                 # function to remove one pixel layer off the image "height"
-                newImg = self.img_crop(img, edge="h")
+                newImg = self.image_crop(img, edge="h")
                 k_h = 2
                 break
 
@@ -239,7 +239,7 @@ class ImageUtils(object):
                 print("Error: the image width is a prime number. Cannot determine pooling kernel size.")
 
                 # function to remove one pixel layer off the image "width"
-                newImg = self.img_crop(img, edge = "w")
+                newImg = self.image_crop(img, edge = "w")
                 k_w = 2
                 break
 
@@ -247,11 +247,11 @@ class ImageUtils(object):
         return k_h, k_w, newImg
 
     # determine average image size
-    def img_mean(self, imgshp):
-        return (imgshp[0]+imgshp[1])/2
+    def image_mean(self, image_shape):
+        return (image_shape[0] + image_shape[1]) / 2
 
     # cut off pixel pixel of the image and return it
-    def img_crop(self, im, edge = "both"):
+    def image_crop(self, im, edge = "both"):
         if edge=="h":
             new_image = im[:im.shape[0]-1, :, :]
         elif edge=="w":
@@ -352,38 +352,6 @@ class ImageUtils(object):
                     break
 
         return edge_image
-
-    # determine positions of edge vectors, return (? x 2) array.
-    # edge_bias details how many edge pixels must be adjacent in ...
-    # ... the same direction before considering it an extendable edge
-    def edge_filler(self, edge_img, edge_bias = 10):
-        edge_pos = edgePxlPos(edge_img)
-        # iterate through edge pixels
-        for k in range(0, edge_pos.shape[0]):
-            coord = edge_pos[k]
-            #print("@",coord)
-
-            # loop around the neighbouring pixels (excluding the pixel itself)
-            for i in range(0, 9):
-                # set increment in x, y, multiplier, and initial edge value
-                dx = i % 3 - 1
-                dy = i // 3 - 1
-                mult = 1
-                edge_value = 0.03
-                if not i == 4:
-                    # reiterate with an increasing multiplier until a non-edge pixel is found
-                    try:
-                        while edge_img[coord[0] + mult * dx, coord[1] + mult * dy] > 0.:
-                            #print("\t ...multiplying edge_value, step in same direction")
-                            mult = mult + 1
-                        # write the value of (mult * edge_value) to non-edge pixel, subject to the edge_bias parameter
-                        if (mult > edge_bias):
-                            #print("\t ...writing out (edge_value x ", mult, ")")
-                            edge_img[coord[0] + i % 3 - 1, coord[1] + i // 3 - 1] = mult * edge_value
-                    except(IndexError):
-                        #print("Edge reached perimeter of the image. No need to fill this edge.")
-                        continue
-        return edge_img
 
     # determine the pixels around this pixel in each direction
     def pxlThickness(self, edgy_img, pxl):

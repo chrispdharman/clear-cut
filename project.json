@@ -4,5 +4,7 @@
   "memory": 128,
   "timeout": 5,
   "role": "arn:aws:iam::197946711863:role/myFirstApexProject_lambda_function",
-  "environment": {}
+  "environment": {},
+  "runtime": "python3.8",
+  "handler": "lambda.handler"
 }
