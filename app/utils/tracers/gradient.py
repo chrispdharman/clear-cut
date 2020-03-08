@@ -12,43 +12,65 @@ class GradientTracer(BaseTracer):
     def trace_objects_in_image(self, image=None, results_path=None, model_no=None):
         '''
         Object tracing one-layer gradient method
+        GradImage: create numpy 2D array of size (2n-1) of the original
         '''
-        # gradImage: create numpy 2D array of size (2n-1) of the original
-        dimY, dimX, chanls = image.shape
+        dimY, dimX, channels = image.shape
 
-        # append an image (in x-direction) for each of the separate channels
-        grad_image = np.zeros(shape=(2*chanls*(dimX-1),2*(dimY-1)))
+        # Append an image (in x-direction) for each of the separate channels
+        grad_image = np.zeros(
+            shape=(
+                2 * (dimX - 1) * channels,
+                2 * (dimY - 1)
+            )
+        )
 
-        # loop over each dimension, populating the gradient image
-        for k in range(0, chanls):
-            # This offset deals with the initial point of each r, g, or b image in the "grid"
-            x_offset = 2 * k * (dimX-1)
+        # Define iteratables
+        c_range = range(0, channels)
+        x_range = range(0, 2 * (dimX - 1))
+        y_range = range(0, 2 * (dimY - 1))
 
-            for i in range(0, 2 * (dimX - 1)):
-                for j in range(0, 2 * (dimY - 1)):
-                    #print("i=",i,", j=",j)
-                    if i % 2 == 1:
-                        # across odd numbered rows and ...
-                        # ... adjacent pixels (top to bottom gradient)
-                        # ... diagonal pixels (top-left to bottom-right gradient)
-                        grad_image[i + x_offset, j] = (
-                            image[int(j / 2) + (j % 2), int((i + 1) / 2)]
-                            - image[int(j / 2), int((i - 1) / 2)]
-                        )[k]
-                    else:
-                        # across even numbered rows and ...
-                        # ... adjacent pixels (left to right gradient)
-                        # ... diagonal pixels (top-right to bottom-left gradient)
-                        grad_image[i + x_offset, j] = (
-                            image[int(j / 2) + 1, int(i / 2)]
-                            - image[int(j / 2), int((i / 2) + (j % 2))]
-                        )[k]
+        for k in c_range:
+            x_offset = 2 * k * (dimX - 1)
+
+            for i in x_range:
+                for j in y_range:
+                    self.calculate_gradient_images_coordinates(
+                        image,
+                        grad_image,
+                        coordinates=(i, j, k),
+                        x_offset=x_offset,
+                    )
 
         edge_array = self.draw_edge_image(grad_image, image_shape=image.shape, visualise=True)
 
         # return an array of 0s (non-edges) and 1s (edges), same shape as passed in image
         print("Is ", image.shape," = ", edge_array.shape, "?")
         return edge_array
+
+    def calculate_gradient_images_coordinates(self, image, grad_image, coordinates=None, x_offset=None):
+        """
+        :params image: original image (numpy array of size M x N)
+        :params image: gradient image (numpy array of size (2M-1) x (2N-1))
+        :params coordinates: specific pixel of the original image
+        :params x_offset: deals with the initial point of each r, g, or b image in the "grid"
+        """
+        i, j, k = coordinates
+        if i % 2 == 1:
+            # across odd numbered rows and ...
+            # ... adjacent pixels (top to bottom gradient)
+            # ... diagonal pixels (top-left to bottom-right gradient)
+            grad_image[i + x_offset, j] = (
+                image[int(j / 2) + (j % 2), int((i + 1) / 2)]
+                - image[int(j / 2), int((i - 1) / 2)]
+            )[k]
+        else:
+            # across even numbered rows and ...
+            # ... adjacent pixels (left to right gradient)
+            # ... diagonal pixels (top-right to bottom-left gradient)
+            grad_image[i + x_offset, j] = (
+                image[int(j / 2) + 1, int(i / 2)]
+                - image[int(j / 2), int((i / 2) + (j % 2))]
+            )[k]
 
     def draw_edge_image(self, grad_image, image_shape=None, image_cut=0.08, visualise=False):
         # Too small (shapes distinct but too much noise): 0.02
