@@ -11,53 +11,26 @@ from matplotlib.patches import Circle
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn import svm
 
+from utils.graph_tools import GraphTools
+
 
 class ImageUtils(object):
+
+    _graph_tools = None
 
     def __init__(self):
         # increase csv file size limit
         csv.field_size_limit(sys.maxsize)
 
+    @property
+    def graph_tools(self):
+        if not self._graph_tools:
+            self._graph_tools = GraphTools()
+        
+        return self._graph_tools
+
     def reduce_iter(self, i):
         return i - (i > 5) * 8
-
-    # def rotate image 90 deg CW shortcut
-    def rot90_CW(self, image):
-        return np.rot90(image, -1)
-
-    # function to calculate the smallest kernel size for th given image
-    def calculate_kernel_size(self, img):
-        # determine image size
-        #print("Image size: ", img.shape)
-        img_h, img_w, *_ = img.shape
-        newImg = img
-
-        # determine lowest denominator in image height
-        k_h = 2
-        while( img_h % k_h != 0 ):
-            k_h += 1
-            if (k_h > img_h/2):
-                print("Error: the image height is a prime number. Cannot determine pooling kernel size.")
-
-                # function to remove one pixel layer off the image "height"
-                newImg = self.image_crop(img, edge="h")
-                k_h = 2
-                break
-
-        # determine lowest denominator in image width
-        k_w = 2
-        while ( (img_w % k_w) != 0 ):
-            k_w += 1
-            if (k_w > img_w/2):
-                print("Error: the image width is a prime number. Cannot determine pooling kernel size.")
-
-                # function to remove one pixel layer off the image "width"
-                newImg = self.image_crop(img, edge = "w")
-                k_w = 2
-                break
-
-        #print("Newish shape=", newImg.shape)
-        return k_h, k_w, newImg
 
     # determine average image size
     def image_mean(self, image_shape):
