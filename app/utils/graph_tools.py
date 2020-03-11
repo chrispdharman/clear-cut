@@ -30,7 +30,7 @@ class GraphTools(object):
         # Cut both edges
         return image[:image.shape[0]-1, :image.shape[1]-1, :]
     
-    def _find_lowest_denominator(self, image, image_length=None, edge='height'):
+    def find_lowest_denominator(self, image, image_length=None, edge='height'):
         for factor in range(3, image_length // 2):
             if not image_length % factor:
                 # Found the smallest denominator (stored in k_h)
