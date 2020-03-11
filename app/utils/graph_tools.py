@@ -10,36 +10,52 @@ from skimage.measure import block_reduce
 
 class GraphTools(object):
 
-    def calculate_kernel_size(self, img):
+    def calculate_kernel_size(self, image):
         # Determine kernel size from image
-        img_h, img_w, *_ = img.shape
-        newImg = img
+        image_h, image_w, *_ = image.shape
 
         # determine lowest denominator in image height
         k_h = 2
-        while( img_h % k_h != 0 ):
+        while image_h % k_h:
+            # Notice: it starts from 3
             k_h += 1
-            if (k_h > img_h/2):
+
+            if k_h > image_h/2:
                 print("Error: the image height is a prime number. Cannot determine pooling kernel size.")
 
                 # function to remove one pixel layer off the image "height"
-                newImg = self.image_crop(img, edge="h")
+                image = self.crop_image(image, edge='height')
                 k_h = 2
                 break
 
         # determine lowest denominator in image width
         k_w = 2
-        while ( (img_w % k_w) != 0 ):
+        while image_w % k_w:
+            # Notice: it starts from 3
             k_w += 1
-            if (k_w > img_w/2):
+
+            if k_w > image_w/2:
                 print("Error: the image width is a prime number. Cannot determine pooling kernel size.")
 
                 # function to remove one pixel layer off the image "width"
-                newImg = self.image_crop(img, edge = "w")
+                image = self.crop_image(image, edge='width')
                 k_w = 2
                 break
 
-        return k_h, k_w, newImg
+        return k_h, k_w, image
+    
+    def crop_image(self, image, edge='both'):
+        # Cut off a single pixel layer from the image
+        if edge == 'height':
+            return image[:image.shape[0]-1, :, :]
+        elif edge == 'width':
+            return image[:, :image.shape[1]-1, :]
+
+        return image[:image.shape[0]-1, :image.shape[1]-1, :]
+
+    def image_mean(self, image_shape):
+        # Determine mean image size
+        return (image_shape[0] + image_shape[1]) / 2
     
     def reduce_image(self, image=None):
         # Calculate the smallest kernel size that fits into the image

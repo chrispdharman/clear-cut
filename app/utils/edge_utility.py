@@ -32,20 +32,6 @@ class ImageUtils(object):
     def reduce_iter(self, i):
         return i - (i > 5) * 8
 
-    # determine average image size
-    def image_mean(self, image_shape):
-        return (image_shape[0] + image_shape[1]) / 2
-
-    # cut off pixel pixel of the image and return it
-    def image_crop(self, im, edge = "both"):
-        if edge=="h":
-            new_image = im[:im.shape[0]-1, :, :]
-        elif edge=="w":
-            new_image = im[:, :im.shape[1]-1, :]
-        else:
-            new_image = im[:im.shape[0]-1, :im.shape[1]-1, :]
-        return new_image
-
     def edge_pixel_positions(self, edge_img):
         """
         Determine coordinates of edge pixels.
