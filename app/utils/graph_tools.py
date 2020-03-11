@@ -14,8 +14,8 @@ class GraphTools(object):
         # Determine kernel size from image
         image_h, image_w, *_ = image.shape
 
-        kernel_height, image = self._find_lowest_denominator(image, image_length=image_h, edge='height')
-        kernel_width, image = self._find_lowest_denominator(image, image_length=image_w, edge='width')
+        kernel_height, image = self.find_lowest_denominator(image, image_length=image_h, edge='height')
+        kernel_width, image = self.find_lowest_denominator(image, image_length=image_w, edge='width')
 
         kernel_size = (kernel_height, kernel_width)
         return image, kernel_size
@@ -29,6 +29,13 @@ class GraphTools(object):
 
         # Cut both edges
         return image[:image.shape[0]-1, :image.shape[1]-1, :]
+    
+    def edge_pixel_positions(self, edge_image):
+        """
+        Determine coordinates of edge pixels.
+        :return: (N x 2) numpy array, where N is the number of edge pixels.
+        """
+        return np.argwhere(edge_image > 0.)
     
     def find_lowest_denominator(self, image, image_length=None, edge='height'):
         for factor in range(3, image_length // 2):

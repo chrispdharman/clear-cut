@@ -1,9 +1,7 @@
 import os
 import sys
 import csv
-import time
 import math
-import numpy as np
 from random import randint
 
 import matplotlib.pyplot as plt
@@ -31,21 +29,6 @@ class ImageUtils(object):
 
     def reduce_iter(self, i):
         return i - (i > 5) * 8
-
-    def edge_pixel_positions(self, edge_img):
-        """
-        Determine coordinates of edge pixels.
-        :return: (N x 2) numpy array, where N is the number of edge pixels.
-        """
-        edge_coordinates = []
-        shape = edge_img.shape
-        for i in range(0, shape[0]):
-            for j in range(0, shape[1]):
-                if edge_img[i,j] > 0.:
-                    #print("edge_img[i,j]=",edge_img[i,j])
-                    edge_coordinates.append([i,j])
-        
-        return np.array(edge_coordinates)
 
     def edge_kill(self, edg_img, coord, radius, wipe=False):
         """
@@ -103,12 +86,13 @@ class ImageUtils(object):
         Check and wipe out any edge pixels found within a pixel_tolerance radius.
         We refer to the radius of surround pixels as "the shell".
         """
-        edge_coordinates = self.edge_pixel_positions(edge_image)
+        edge_coordinates = self.graph_tools.edge_pixel_positions(edge_image)
 
         for edge_coordinate in edge_coordinates:
             # Iterate over each layer of the shell (r --> r - 1 decrements)
             for sub_radius in reversed(range(1, pixel_tolerance + 1)):
                 noisy_shell_found = self.edge_kill(edge_image, edge_coordinate, radius=sub_radius)
+
                 if noisy_shell_found:
                     edge_image = self.edge_kill(edge_image, edge_coordinate, radius=sub_radius-1, wipe=True)
                     break
