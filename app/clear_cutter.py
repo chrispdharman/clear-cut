@@ -70,13 +70,13 @@ class ClearCut(ImageUtils):
 
         # Check if the image is too small to be pooled, then pool the image
         while self.graph_tools.image_mean(self.image.shape) > self.image_size_threshold:
-            krn_h, krn_w, image = self.graph_tools.reduce_image(image=self.image)
+            image, kernel = self.graph_tools.reduce_image(image=self.image)
             
             # Update dictionary
             iter_no = 'iteration:{}'.format(len(pooling_history.keys()))
             pooling_history[iter_no] = {
                 'image_shape': image.shape,
-                'kernal_shape': (krn_h, krn_w),
+                'kernal_size': kernel,
             }
             
             # Must assign within the loop to dynamicaly update the while condition
