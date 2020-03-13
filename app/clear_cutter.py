@@ -37,8 +37,10 @@ class ClearCut(ImageUtils):
         self.image_filename = 'Bob.jpeg'
         self.image_filename = 'colorful1.jpeg'
         self.image_filename = 'john1.jpg'
-        #self.image_filename = 'minimal1.jpg'
-        #self.image_filename = 'heathers_cats.jpg'
+        self.image_filename = 'minimal1.jpg'
+        self.image_filename = 'heathers_cats.jpg'
+        self.image_filename = 'IMG_0396.jpg'
+        self.image_filename = 'IMG_0397.jpg'
 
         self.image_filepath = '/'.join([self.base_dir, self.image_filename])
         self.image_size_threshold = 400
@@ -53,14 +55,26 @@ class ClearCut(ImageUtils):
 
     def run(self):
         # Determine segmentation edges of the image (default method = gradient)
-        edgy_images = self.tracer.trace_objects_in_image(image=self.image)
+        edgy_image = self.tracer.trace_objects_in_image(image=self.image)
 
         # Reduce noise (edge pixels that cannot possibly contain an edge)
-        edgy_images = self.edge_killer(edgy_images, pixel_tolerance=self.pixel_tolerance)
+        edgy_image = self.edge_killer(edgy_image, pixel_tolerance=self.pixel_tolerance)
 
         self.graph_tools.save_image(
-            edgy_images,
+            edgy_image,
             filepath='{}/0007_noise_reduced_image.png'.format(self.tracer.results_path),
+        )
+
+        # Mask over the original image
+        import numpy as np
+
+        wipe_mask = edgy_image < 0.01
+        bold_mask = edgy_image > 0.01
+        self.image[wipe_mask] = 255
+        self.image[bold_mask] = 0
+        self.graph_tools.save_image(
+            self.image,
+            filepath='{}/0008_edge_masked_image.png'.format(self.tracer.results_path),
         )
 
     def reduce_image_size(self):
@@ -89,12 +103,12 @@ class ClearCut(ImageUtils):
             ))
 
             self.graph_tools.save_image(
-                image,
+                self.image,
                 filepath='{}/0001_size_reduced_image.png'.format(self.tracer.results_path),
             )
 
             self.graph_tools.save_image(
-                image,
+                self.image,
                 filepath='{}/0002_size_reduced_image_channel_collage.png'.format(self.tracer.results_path),
                 split_rgb_channels=True,
             )

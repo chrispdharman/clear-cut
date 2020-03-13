@@ -55,7 +55,7 @@ class GradientTracer(BaseTracer):
         :params x_offset: deals with the initial point of each r, g, or b image in the "grid"
         """
         i, j, k = coordinates
-        if i % 2 == 1:
+        if i % 2:
             # across odd numbered rows and ...
             # ... adjacent pixels (top to bottom gradient)
             # ... diagonal pixels (top-left to bottom-right gradient)
