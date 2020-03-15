@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from itertools import product
 
 import matplotlib.pyplot as plt
 
@@ -32,14 +33,13 @@ class GradientTracer(BaseTracer):
         for k in c_range:
             x_offset = 2 * k * (dimX - 1)
 
-            for i in x_range:
-                for j in y_range:
-                    self.calculate_gradient_images_coordinates(
-                        image,
-                        grad_image,
-                        coordinates=(i, j, k),
-                        x_offset=x_offset,
-                    )
+            for i, j in product(x_range, y_range):
+                self.calculate_gradient_images_coordinates(
+                    image,
+                    grad_image,
+                    coordinate=(i, j, k),
+                    x_offset=x_offset,
+                )
 
         edge_array = self.draw_edge_image(grad_image, image_shape=image.shape, visualise=True)
 
@@ -47,14 +47,14 @@ class GradientTracer(BaseTracer):
         print("Is ", image.shape," = ", edge_array.shape, "?")
         return edge_array
 
-    def calculate_gradient_images_coordinates(self, image, grad_image, coordinates=None, x_offset=None):
+    def calculate_gradient_images_coordinates(self, image, grad_image, coordinate=None, x_offset=None):
         """
         :params image: original image (numpy array of size M x N)
         :params image: gradient image (numpy array of size (2M-1) x (2N-1))
         :params coordinates: specific pixel of the original image
         :params x_offset: deals with the initial point of each r, g, or b image in the "grid"
         """
-        i, j, k = coordinates
+        i, j, k = coordinate
         if i % 2:
             # across odd numbered rows and ...
             # ... adjacent pixels (top to bottom gradient)

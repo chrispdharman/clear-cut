@@ -38,7 +38,7 @@ class GraphTools(object):
         return np.argwhere(edge_image > 0.)
     
     def find_lowest_denominator(self, image, image_length=None, edge='height'):
-        for factor in range(3, image_length // 2):
+        for factor in range(2, image_length // 2):
             if not image_length % factor:
                 # Found the smallest denominator (stored in k_h)
                 return factor, image
