@@ -1,10 +1,10 @@
 {
-  "name": "myFirstApexProject",
-  "description": "",
+  "name": "clearCutApexProject",
+  "description": "Handle cutting out edges of an image.",
   "memory": 128,
-  "timeout": 5,
-  "role": "arn:aws:iam::197946711863:role/myFirstApexProject_lambda_function",
+  "timeout": 15,
+  "role": "arn:aws:iam::197946711863:role/service-role/myFirstLambda-role-hfl9lejm",
   "environment": {},
-  "runtime": "python3.8",
+  "runtime": "python3.6",
   "handler": "lambda.handler"
 }
