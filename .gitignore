@@ -1,8 +1,9 @@
 venv
+.env
 .vscode
 .DS_store
 app/__pycache__
-app/.DS_store
+app/.DS_Store
 app/utils/__pycache__
 app/utils/tracers/__pycache__
 app/results/*

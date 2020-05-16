@@ -36,15 +36,18 @@ class ClearCut(ImageUtils):
     def default_image_selection(self):
         self.image_filename = 'Bob.jpeg'
         self.image_filename = 'colorful1.jpeg'
-        self.image_filename = 'john1.jpg'
-        self.image_filename = 'minimal1.jpg'
-        self.image_filename = 'heathers_cats.jpg'
-        self.image_filename = 'IMG_0396.jpg'
-        self.image_filename = 'IMG_0397.jpg'
+        #self.image_filename = 'john1.jpg'
+        #self.image_filename = 'minimal1.jpg'
+        #self.image_filename = 'heathers_cats.jpg'
+        #self.image_filename = 'IMG_0396.jpg'
+        #self.image_filename = 'IMG_0397.jpg'
+        #self.image_filename = 'pidgey.jpg'
+        #self.image_filename = 'IMG_1740.jpg'
+        #self.image_filename = 'IMG_1741.jpg'
 
         self.image_filepath = '/'.join([self.base_dir, self.image_filename])
-        self.image_size_threshold = 400
-        self.pixel_tolerance = 4
+        self.image_size_threshold = 600
+        self.pixel_tolerance = 10
 
         self.image_raw = self.graph_tools.upright_image(image_filepath=self.image_filepath)
         self.image = np.array(self.image_raw)
