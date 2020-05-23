@@ -2,9 +2,9 @@ venv
 .env
 .vscode
 .DS_store
-app/__pycache__
-app/.DS_Store
-app/utils/__pycache__
-app/utils/tracers/__pycache__
-app/results/*
-app/results/*/*
+clear-cut/__pycache__
+clear-cut/.DS_Store
+clear-cut/utils/__pycache__
+clear-cut/utils/tracers/__pycache__
+clear-cut/results/*
+clear-cut/results/*/*
