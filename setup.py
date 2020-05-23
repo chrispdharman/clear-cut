@@ -12,13 +12,13 @@ requirements = read('requirements.txt').splitlines()
 
 setup(
     name='clear-cut',
-    version='1.0.1',
+    version='1.0.3',
     description='Number Crunching Box to Extract Edges from a Provided Image',
     url='https://github.com/chrispdharman/clear-cut',
     author='Christopher Harman',
     author_email='christopher.p.d.harman@gmail.com',
     license='Unlicensed',
-    packages=['clear-cut'],
+    packages=['clear_cut'],
     install_requires=requirements,
     zip_safe=False
 )
