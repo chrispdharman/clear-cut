@@ -11,8 +11,8 @@ def read(fname):
 requirements = read('requirements.txt').splitlines()
 
 setuptools.setup(
-    name='clear-cut-quanta-chris',
-    version='1.0.4',
+    name='clear-cut',
+    version='1.1.0',
     description='Number Crunching Backend to Extract Edges from a Provided Image',
     long_description=open('README.md', 'r').read(),
     long_description_content_type='text/markdown',
