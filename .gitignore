@@ -8,3 +8,4 @@ clear-cut/utils/__pycache__
 clear-cut/utils/tracers/__pycache__
 clear-cut/results/*
 clear-cut/results/*/*
+clear-cut.egg-info/*
