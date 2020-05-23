@@ -1,5 +1,5 @@
 import os
-from setuptools import setup
+import setuptools
 
 def read(fname):
     try:
@@ -10,15 +10,25 @@ def read(fname):
 
 requirements = read('requirements.txt').splitlines()
 
-setup(
-    name='clear-cut',
-    version='1.0.3',
-    description='Number Crunching Box to Extract Edges from a Provided Image',
+setuptools.setup(
+    name='clear-cut-quanta-chris',
+    version='1.0.4',
+    description='Number Crunching Backend to Extract Edges from a Provided Image',
+    long_description=open('README.md', 'r').read(),
+    long_description_content_type='text/markdown',
     url='https://github.com/chrispdharman/clear-cut',
     author='Christopher Harman',
     author_email='christopher.p.d.harman@gmail.com',
-    license='Unlicensed',
-    packages=['clear_cut'],
+    license='MIT',
+    packages=setuptools.find_packages(),
     install_requires=requirements,
+    classifiers=[
+        'Programming Language :: Python :: 3',
+        'Operating System :: OS Independent',
+        'Intended Audience :: Information Technology',
+        'Natural Language :: English',
+        'Topic :: Scientific/Engineering'
+    ],
+    python_requires='>=3.6',
     zip_safe=False
 )
