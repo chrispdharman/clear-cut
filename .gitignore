@@ -2,10 +2,10 @@ venv
 .env
 .vscode
 .DS_store
-clear-cut/__pycache__
-clear-cut/.DS_Store
-clear-cut/utils/__pycache__
-clear-cut/utils/tracers/__pycache__
-clear-cut/results/*
-clear-cut/results/*/*
-clear-cut.egg-info/*
+clear_cut/__pycache__
+clear_cut/.DS_Store
+clear_cut/utils/__pycache__
+clear_cut/utils/tracers/__pycache__
+clear_cut/results/*
+clear_cut/results/*/*
+clear_cut.egg-info/*
