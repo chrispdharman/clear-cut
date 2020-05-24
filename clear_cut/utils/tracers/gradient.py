@@ -2,6 +2,8 @@ import os
 import numpy as np
 from itertools import product
 
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 from utils.tracers.base import BaseTracer

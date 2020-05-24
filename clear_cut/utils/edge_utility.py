@@ -4,11 +4,6 @@ import csv
 import math
 from random import randint
 
-import matplotlib.pyplot as plt
-from matplotlib.patches import Circle
-from mpl_toolkits.mplot3d import Axes3D
-from sklearn import svm
-
 from utils.graph_tools import GraphTools
 
 
