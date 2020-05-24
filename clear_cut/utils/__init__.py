@@ -1,2 +1,2 @@
 __all__ = ['tracers']
-import tracers
+import clear_cut.utils.tracers
