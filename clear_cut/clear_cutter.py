@@ -5,7 +5,7 @@ import numpy as np
 from collections import defaultdict
 from random import randint
 
-from utils.edge_utility import ImageUtils
+from clear_cut.utils.edge_utility import ImageUtils
 
 
 class ClearCut(ImageUtils):
@@ -21,7 +21,7 @@ class ClearCut(ImageUtils):
     @property
     def tracer(self, method='gradient'):
         if not self._tracer:
-            Tracer = pydoc.locate('utils.tracers.{}.{}Tracer'.format(
+            Tracer = pydoc.locate('clear_cut.utils.tracers.{}.{}Tracer'.format(
                 method, str.capitalize(method)
             ))
             self._tracer = Tracer()

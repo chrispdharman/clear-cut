@@ -6,7 +6,7 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
-from utils.tracers.base import BaseTracer
+from clear_cut.utils.tracers.base import BaseTracer
 
 
 class GradientTracer(BaseTracer):

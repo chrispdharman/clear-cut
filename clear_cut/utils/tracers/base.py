@@ -34,7 +34,7 @@ class BaseTracer(object):
         return block_reduce(mrgdImg, (2, 2), np.max)
         
     def _get_or_create_results_dir(self, results_path, method):
-        results_path = results_path or 'app/results/misc'
+        results_path = results_path or 'clear_cut/results/misc'
 
         # Create results directory if it doesn't yet exist
         if "." in results_path:
