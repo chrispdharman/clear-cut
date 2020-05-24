@@ -20,9 +20,7 @@ setuptools.setup(
     author='Christopher Harman',
     author_email='christopher.p.d.harman@gmail.com',
     license='MIT',
-    packages=[
-        'clear_cut',
-    ],
+    packages=setuptools.find_packages(),
     install_requires=requirements,
     classifiers=[
         'Programming Language :: Python :: 3',
