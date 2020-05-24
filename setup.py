@@ -20,8 +20,18 @@ setuptools.setup(
     author='Christopher Harman',
     author_email='christopher.p.d.harman@gmail.com',
     license='MIT',
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=[
+        'documentation',
+        'tests'
+    ]),
     install_requires=requirements,
+    package_data={
+        "clear_cut": [
+            'images/*.jpeg',
+            'images/*.JPG',
+            'images/*.jpg'
+        ]
+    },
     classifiers=[
         'Programming Language :: Python :: 3',
         'Operating System :: OS Independent',
