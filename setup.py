@@ -12,7 +12,7 @@ requirements = read('requirements.txt').splitlines()
 
 setuptools.setup(
     name='clear-cut',
-    version='1.1.0',
+    version='1.2.0',
     description='Number Crunching Backend to Extract Edges from a Provided Image',
     long_description=open('README.md', 'r').read(),
     long_description_content_type='text/markdown',
@@ -20,7 +20,9 @@ setuptools.setup(
     author='Christopher Harman',
     author_email='christopher.p.d.harman@gmail.com',
     license='MIT',
-    packages=setuptools.find_packages(),
+    packages=[
+        'clear_cut',
+    ],
     install_requires=requirements,
     classifiers=[
         'Programming Language :: Python :: 3',

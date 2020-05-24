@@ -2,25 +2,20 @@ import pydoc
 import json
 import time
 import numpy as np
-import matplotlib
-matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-
 from collections import defaultdict
 from random import randint
 
 from utils.edge_utility import ImageUtils
-
-DEBUG = True
 
 
 class ClearCut(ImageUtils):
 
     _tracer = None
 
-    def __init__(self):
-        self.base_dir = 'app/images'
+    def __init__(self, DEBUG=False):
+        self.DEBUG = DEBUG
+
+        self.base_dir = 'clear_cut/images'
         self.default_image_selection()
     
     @property
@@ -100,7 +95,7 @@ class ClearCut(ImageUtils):
             self.image = image
         
         # note that the final k is stored in "k"
-        if DEBUG:
+        if self.DEBUG:
             print('pooling_history={}'.format(
                 json.dumps(pooling_history, indent=4)
             ))
@@ -115,7 +110,3 @@ class ClearCut(ImageUtils):
                 filepath='{}/0002_size_reduced_image_channel_collage.png'.format(self.tracer.results_path),
                 split_rgb_channels=True,
             )
-
-
-clear_cut = ClearCut()
-clear_cut.run()

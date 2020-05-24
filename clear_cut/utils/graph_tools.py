@@ -1,11 +1,10 @@
 import numpy as np
+from PIL import Image, ExifTags
+from skimage.measure import block_reduce
+
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-
-from PIL import Image, ExifTags
-from skimage.measure import block_reduce
 
 
 class GraphTools(object):
