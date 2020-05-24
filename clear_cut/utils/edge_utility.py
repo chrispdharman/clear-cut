@@ -4,7 +4,7 @@ import csv
 import math
 from random import randint
 
-from utils.graph_tools import GraphTools
+from clear_cut.utils.graph_tools import GraphTools
 
 
 class ImageUtils(object):
