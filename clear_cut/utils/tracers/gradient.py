@@ -2,10 +2,6 @@ import os
 import numpy as np
 from itertools import product
 
-import matplotlib
-matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt
-
 from clear_cut.utils.tracers.base import BaseTracer
 
 
@@ -43,10 +39,10 @@ class GradientTracer(BaseTracer):
                     x_offset=x_offset,
                 )
 
-        edge_array = self.draw_edge_image(grad_image, image_shape=image.shape, visualise=True)
+        edge_array = self.draw_edge_image(grad_image, image_shape=image.shape)
 
         # return an array of 0s (non-edges) and 1s (edges), same shape as passed in image
-        print("Is ", image.shape," = ", edge_array.shape, "?")
+        self._print_if_debugging(f'Is {image.shape} == {edge_array.shape}?')
         return edge_array
 
     def calculate_gradient_images_coordinates(self, image, grad_image, coordinate=None, x_offset=None):
@@ -74,7 +70,7 @@ class GradientTracer(BaseTracer):
                 - image[int(j / 2), int((i / 2) + (j % 2))]
             )[k]
 
-    def draw_edge_image(self, grad_image, image_shape=None, image_cut=0.08, visualise=False):
+    def draw_edge_image(self, grad_image, image_shape=None, image_cut=0.08):
         # Too small (shapes distinct but too much noise): 0.02
         # Maybe right? 0.07 (Bob.jpeg)
         # Too large (shaped not distinct enough): 0.10
@@ -87,27 +83,39 @@ class GradientTracer(BaseTracer):
             image_shape=image_shape
         )
 
-        if visualise:
-            # Display separate rgb gradient images without cutoff applied
-            plt.figure()
-            plt.imshow(np.absolute(grad_image.T), interpolation="nearest")
-            plt.savefig('{}/0003_gradient_image_raw.png'.format(self.results_path))
+        if self.serverless:
+            # Will need to set up to hit S3 here
+            return edge_array
+        
+        ## Otherwise save images in local results directory
 
-            # Display separate rgb gradient images with cutoff applied
-            plt.figure()
-            plt.imshow(np.multiply((np.absolute(grad_image.T) < (1-image_cut)*255),(np.absolute(grad_image.T) > image_cut*255)))
-            plt.savefig('{}/0004_gradient_image_cut.png'.format(self.results_path))
+        # Display separate rgb gradient images without cutoff applied
+        Image.fromarray(
+            np.absolute(grad_image.T)
+        ).save(
+            '{}/0003_gradient_image_raw.png'.format(self.results_path)
+        )
 
-            # Display merged rgb gradient image without cutoff applied
-            mrgIm1 = self.merge_channels_of_traced_image(grad_image.T, image_shape)
-            plt.figure()
-            plt.imshow(mrgIm1)
-            plt.savefig('{}/0005_merged_image_raw.png'.format(self.results_path))
-            
-            # Display merged rgb gradient image with cutoff applied
-            plt.figure()
-            plt.imshow(edge_array)
-            plt.savefig('{}/0006_merged_image_cut.png'.format(self.results_path))
+        # Display separate rgb gradient images with cutoff applied
+        Image.fromarray(
+            np.multiply((np.absolute(grad_image.T) < (1-image_cut)*255),(np.absolute(grad_image.T) > image_cut*255))
+        ).save(
+            '{}/0004_gradient_image_cut.png'.format(self.results_path)
+        )
+
+        # Display merged rgb gradient image without cutoff applied
+        Image.fromarray(
+            self.merge_channels_of_traced_image(grad_image.T, image_shape)
+        ).save(
+            '{}/0005_merged_image_raw.png'.format(self.results_path)
+        )
+        
+        # Display merged rgb gradient image with cutoff applied
+        Image.fromarray(
+            edge_array
+        ).save(
+            '{}/0006_merged_image_cut.png'.format(self.results_path)
+        )
 
         return edge_array
 
@@ -116,21 +124,21 @@ class GradientTracer(BaseTracer):
         # This is akin to filling the colour of the edges with the same colour as their adjacent pixels
         x_miss = image_shape[0] - edge_array.shape[0]
         if x_miss == 0:
-            print("Same number of rows. Good!")
+            self._print_if_debugging('Same number of rows. Good!')
         elif x_miss > 0:
-            print("Lost rows in compressing gradient. It can happen! Attempting to automatically dealing with it.")
+            self._print_if_debugging('Lost rows in compressing gradient. It can happen! Attempting to automatically dealing with it.')
             edge_array = np.concatenate((edge_array, np.zeros((1, edge_array.shape[1]))), axis = 0)
         else:
-            raise Exception("Gained rows in compressing gradient. Doesn't make sense!")
+            raise Exception('Gained rows in compressing gradient. Doesn\'t make sense!')
 
         y_miss = image_shape[1] - edge_array.shape[1]
         if y_miss == 0:
-            print("Same number of columns. Good!")
+            self._print_if_debugging('Same number of columns. Good!')
         elif y_miss > 0:
-            print("Lost columns in compressing gradient. It can happen! Attempting to automatically dealing with it.")
+            self._print_if_debugging('Lost columns in compressing gradient. It can happen! Attempting to automatically dealing with it.')
             edge_array = np.concatenate((edge_array, np.zeros((edge_array.shape[0], 1))), axis=1)
         else:
-            raise Exception("Gained columns in compressing gradient. Doesn't make sense!")
+            raise Exception('Gained columns in compressing gradient. Doesn\'t make sense!')
 
         return edge_array
     
@@ -142,3 +150,7 @@ class GradientTracer(BaseTracer):
             (np.absolute(grad_image.T) < (1 - image_cut) * 255),
             (np.absolute(grad_image.T) > image_cut * 255)
         )
+    
+    def _print_if_debugging(self, message):
+        if self.debug:
+            print(message)

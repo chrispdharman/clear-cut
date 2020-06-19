@@ -12,33 +12,33 @@ class ClearCut(ImageUtils):
 
     _tracer = None
 
-    def __init__(self, DEBUG=False):
-        self.DEBUG = DEBUG
-
-        self.base_dir = 'clear_cut/images'
+    def __init__(self, base_path='', debug=False, serverless=True):
+        """
+        If serverless, we must store results in S3 buckets
+        """
+        self.base_path = '/opt/python/lib/python3.7/site-packages/' if serverless else base_path
+        self.debug = debug
+        self.serverless = serverless
+        
+        self.base_dir = f'{self.base_path}clear_cut/images'
         self.default_image_selection()
     
     @property
     def tracer(self, method='gradient'):
         if not self._tracer:
-            Tracer = pydoc.locate('clear_cut.utils.tracers.{}.{}Tracer'.format(
-                method, str.capitalize(method)
-            ))
-            self._tracer = Tracer()
+            Tracer = pydoc.locate(
+                f'clear_cut.utils.tracers.{method}.{str.capitalize(method)}Tracer'
+            )
+            self._tracer = Tracer(
+                results_path=self.results_filepath,
+                debug=self.debug,
+                serverless=self.serverless,
+            )
         
         return self._tracer
 
     def default_image_selection(self):
         self.image_filename = 'Bob.jpeg'
-        self.image_filename = 'colorful1.jpeg'
-        #self.image_filename = 'john1.jpg'
-        #self.image_filename = 'minimal1.jpg'
-        #self.image_filename = 'heathers_cats.jpg'
-        #self.image_filename = 'IMG_0396.jpg'
-        #self.image_filename = 'IMG_0397.jpg'
-        #self.image_filename = 'pidgey.jpg'
-        #self.image_filename = 'IMG_1740.jpg'
-        #self.image_filename = 'IMG_1741.jpg'
 
         self.image_filepath = '/'.join([self.base_dir, self.image_filename])
         self.image_size_threshold = 600
@@ -48,7 +48,7 @@ class ClearCut(ImageUtils):
         self.image = np.array(self.image_raw)
 
         filename, _ = self.image_filename.split('.')
-        self.results_filepath = 'results/{}'.format(filename)
+        self.results_filepath = f'{self.base_path}results/{filename}'
         self.reduce_image_size()
 
     def run(self):
@@ -64,8 +64,6 @@ class ClearCut(ImageUtils):
         )
 
         # Mask over the original image
-        import numpy as np
-
         wipe_mask = edgy_image < 0.01
         bold_mask = edgy_image > 0.01
         self.image[wipe_mask] = 255
@@ -95,7 +93,7 @@ class ClearCut(ImageUtils):
             self.image = image
         
         # note that the final k is stored in "k"
-        if self.DEBUG:
+        if self.debug:
             print('pooling_history={}'.format(
                 json.dumps(pooling_history, indent=4)
             ))

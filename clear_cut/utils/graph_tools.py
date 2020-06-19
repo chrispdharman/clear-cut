@@ -2,12 +2,12 @@ import numpy as np
 from PIL import Image, ExifTags
 from skimage.measure import block_reduce
 
-import matplotlib
-matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt
-
 
 class GraphTools(object):
+
+    def __init__(self, serverless=False, debug=False):
+        self.debug = debug
+        self.serverless = serverless
 
     def calculate_kernel_size(self, image):
         # Determine kernel size from image
@@ -63,9 +63,12 @@ class GraphTools(object):
         if split_rgb_channels:
             image = self.split_rgb_channels(image)
 
-        plt.figure()
-        plt.imshow(image)
-        plt.savefig(filepath)
+        if self.serverless:
+            # Will need to set up to hit S3 here
+            return
+        
+        # Otherwise save image in local results directory
+        Image.fromarray(image).save(filepath)
 
     @staticmethod
     def split_rgb_channels(image):
