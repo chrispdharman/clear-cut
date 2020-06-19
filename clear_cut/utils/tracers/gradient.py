@@ -84,6 +84,9 @@ class GradientTracer(BaseTracer):
             image_shape=image_shape
         )
 
+        # Needs conversion back to (0, 255) scale
+        edge_array = edge_array * 255
+
         if self.serverless:
             # Will need to set up to hit S3 here
             return edge_array
@@ -104,7 +107,7 @@ class GradientTracer(BaseTracer):
 
         # Display merged rgb gradient image without cutoff applied
         self.graph_tools.save_image(
-            self.merge_channels_of_traced_image(grad_image.T, image_shape),
+            self.merge_channels_of_traced_image(grad_image.T, image_shape) / 3,
             filepath=f'{self.results_path}/0005_merged_image_raw.png',
         )
         

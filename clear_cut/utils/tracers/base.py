@@ -46,7 +46,7 @@ class BaseTracer(object):
                     grdImg[i, j]
                     + grdImg[i, j + x_offset]
                     + grdImg[i, j + 2 * x_offset]
-                )/3
+                )
 
         # Reduce gradient array to original image shape. Max pool gradient array using 2x2 kernel
         return block_reduce(mrgdImg, (2, 2), np.max)
