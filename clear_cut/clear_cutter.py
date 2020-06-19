@@ -60,7 +60,7 @@ class ClearCut(ImageUtils):
 
         self.graph_tools.save_image(
             edgy_image,
-            filepath='{}/0007_noise_reduced_image.png'.format(self.tracer.results_path),
+            filepath=f'{self.tracer.results_path}/0007_noise_reduced_image.png',
         )
 
         # Mask over the original image
@@ -70,7 +70,7 @@ class ClearCut(ImageUtils):
         self.image[bold_mask] = 0
         self.graph_tools.save_image(
             self.image,
-            filepath='{}/0008_edge_masked_image.png'.format(self.tracer.results_path),
+            filepath=f'{self.tracer.results_path}/0008_edge_masked_image.png',
         )
 
     def reduce_image_size(self):
