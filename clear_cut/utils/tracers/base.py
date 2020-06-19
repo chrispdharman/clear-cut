@@ -6,9 +6,13 @@ from skimage.measure import block_reduce
 
 class BaseTracer(object):
 
-    def __init__(self, method='Gradient', results_path=None):
+    def __init__(self, method='Gradient', results_path=None, debug=False, serverless=True):
+        self.debug = debug
         self.method = method
-        self._get_or_create_results_dir(results_path, method)
+        self.serverless = serverless
+
+        if not self.serverless:
+            self._get_or_create_results_dir(results_path, method)
 
     def merge_channels_of_traced_image(self, grdImg, origShape):
         """
@@ -42,4 +46,4 @@ class BaseTracer(object):
 
         self.results_path = "/".join([results_path, method])
         if not os.path.isdir(self.results_path):
-            os.mkdir(self.results_path)
+            os.makedirs(self.results_path)
