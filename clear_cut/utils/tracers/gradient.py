@@ -9,7 +9,7 @@ from clear_cut.utils.tracers.base import BaseTracer
 class GradientTracer(BaseTracer):
     
     # model_no is just a unique timestamp, i.e. model_no = time.time()
-    def trace_objects_in_image(self, image=None, results_path=None, model_no=None):
+    def trace_objects_in_image(self, image=None):
         '''
         Object tracing one-layer gradient method
         GradImage: create numpy 2D array of size (2n-1) of the original

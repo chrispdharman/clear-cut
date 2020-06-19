@@ -13,9 +13,10 @@ class BaseTracer(object):
         self.debug = debug
         self.method = method
         self.serverless = serverless
+        self.results_path = results_path or 'clear_cut/results/misc'
 
         if not self.serverless:
-            self._get_or_create_results_dir(results_path, method)
+            self._get_or_create_results_dir()
     
     @property
     def graph_tools(self):
@@ -51,13 +52,12 @@ class BaseTracer(object):
         # Reduce gradient array to original image shape. Max pool gradient array using 2x2 kernel
         return block_reduce(mrgdImg, (2, 2), np.max)
         
-    def _get_or_create_results_dir(self, results_path, method):
-        results_path = results_path or 'clear_cut/results/misc'
+    def _get_or_create_results_dir(self):
+        results_path = self.results_path
 
         # Create results directory if it doesn't yet exist
-        if "." in results_path:
-            results_path, _ = results_path.split(".")
+        if '.' in results_path:
+            results_path, _ = results_path.split('.')
 
-        self.results_path = "/".join([results_path, method])
-        if not os.path.isdir(self.results_path):
-            os.makedirs(self.results_path)
+        if not os.path.isdir(results_path):
+            os.makedirs(results_path)
