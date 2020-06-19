@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from itertools import product
+from PIL import Image
 
 from clear_cut.utils.tracers.base import BaseTracer
 
@@ -8,7 +9,7 @@ from clear_cut.utils.tracers.base import BaseTracer
 class GradientTracer(BaseTracer):
     
     # model_no is just a unique timestamp, i.e. model_no = time.time()
-    def trace_objects_in_image(self, image=None, results_path=None, model_no=None):
+    def trace_objects_in_image(self, image=None):
         '''
         Object tracing one-layer gradient method
         GradImage: create numpy 2D array of size (2n-1) of the original
@@ -83,6 +84,9 @@ class GradientTracer(BaseTracer):
             image_shape=image_shape
         )
 
+        # Needs conversion back to (0, 255) scale
+        edge_array = edge_array * 255
+
         if self.serverless:
             # Will need to set up to hit S3 here
             return edge_array
@@ -90,31 +94,27 @@ class GradientTracer(BaseTracer):
         ## Otherwise save images in local results directory
 
         # Display separate rgb gradient images without cutoff applied
-        Image.fromarray(
-            np.absolute(grad_image.T)
-        ).save(
-            '{}/0003_gradient_image_raw.png'.format(self.results_path)
+        self.graph_tools.save_image(
+            np.absolute(grad_image.T),
+            filepath=f'{self.results_path}/0003_gradient_image_raw.png',
         )
 
         # Display separate rgb gradient images with cutoff applied
-        Image.fromarray(
-            np.multiply((np.absolute(grad_image.T) < (1-image_cut)*255),(np.absolute(grad_image.T) > image_cut*255))
-        ).save(
-            '{}/0004_gradient_image_cut.png'.format(self.results_path)
+        self.graph_tools.save_image(
+            np.multiply((np.absolute(grad_image.T) < (1-image_cut)*255),(np.absolute(grad_image.T) > image_cut*255)),
+            filepath=f'{self.results_path}/0004_gradient_image_cut.png',
         )
 
         # Display merged rgb gradient image without cutoff applied
-        Image.fromarray(
-            self.merge_channels_of_traced_image(grad_image.T, image_shape)
-        ).save(
-            '{}/0005_merged_image_raw.png'.format(self.results_path)
+        self.graph_tools.save_image(
+            self.merge_channels_of_traced_image(grad_image.T, image_shape) / 3,
+            filepath=f'{self.results_path}/0005_merged_image_raw.png',
         )
         
         # Display merged rgb gradient image with cutoff applied
-        Image.fromarray(
-            edge_array
-        ).save(
-            '{}/0006_merged_image_cut.png'.format(self.results_path)
+        self.graph_tools.save_image(
+            edge_array,
+            filepath=f'{self.results_path}/0006_merged_image_cut.png',
         )
 
         return edge_array

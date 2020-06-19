@@ -68,7 +68,13 @@ class GraphTools(object):
             return
         
         # Otherwise save image in local results directory
-        Image.fromarray(image).save(filepath)
+        image_to_save = Image.fromarray(image)
+
+        # See https://stackoverflow.com/questions/16720682/pil-cannot-write-mode-f-to-jpeg
+        if image_to_save.mode != 'RGB':
+            image_to_save = image_to_save.convert('RGB')
+
+        image_to_save.save(filepath)
 
     @staticmethod
     def split_rgb_channels(image):

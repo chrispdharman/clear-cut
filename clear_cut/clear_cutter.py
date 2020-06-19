@@ -12,7 +12,7 @@ class ClearCut(ImageUtils):
 
     _tracer = None
 
-    def __init__(self, base_path='', debug=False, serverless=True):
+    def __init__(self, base_path='', debug=False, serverless=True, **kwargs):
         """
         If serverless, we must store results in S3 buckets
         """
@@ -21,7 +21,7 @@ class ClearCut(ImageUtils):
         self.serverless = serverless
         
         self.base_dir = f'{self.base_path}clear_cut/images'
-        self.default_image_selection()
+        self.default_image_selection(**kwargs)
     
     @property
     def tracer(self, method='gradient'):
@@ -37,12 +37,12 @@ class ClearCut(ImageUtils):
         
         return self._tracer
 
-    def default_image_selection(self):
-        self.image_filename = 'Bob.jpeg'
+    def default_image_selection(self, **kwargs):
+        self.image_filename = kwargs.get('image_filename', 'Bob.jpeg')
 
         self.image_filepath = '/'.join([self.base_dir, self.image_filename])
-        self.image_size_threshold = 600
-        self.pixel_tolerance = 10
+        self.image_size_threshold = kwargs.get('image_size_threshold', 600)
+        self.pixel_tolerance = kwargs.get('pixel_tolerance', 10)
 
         self.image_raw = self.graph_tools.upright_image(image_filepath=self.image_filepath)
         self.image = np.array(self.image_raw)
@@ -60,7 +60,7 @@ class ClearCut(ImageUtils):
 
         self.graph_tools.save_image(
             edgy_image,
-            filepath='{}/0007_noise_reduced_image.png'.format(self.tracer.results_path),
+            filepath=f'{self.tracer.results_path}/0007_noise_reduced_image.png',
         )
 
         # Mask over the original image
@@ -70,7 +70,7 @@ class ClearCut(ImageUtils):
         self.image[bold_mask] = 0
         self.graph_tools.save_image(
             self.image,
-            filepath='{}/0008_edge_masked_image.png'.format(self.tracer.results_path),
+            filepath=f'{self.tracer.results_path}/0008_edge_masked_image.png',
         )
 
     def reduce_image_size(self):

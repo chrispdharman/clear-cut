@@ -1,18 +1,33 @@
 import os
 import numpy as np
-
 from skimage.measure import block_reduce
+
+from clear_cut.utils.graph_tools import GraphTools
 
 
 class BaseTracer(object):
+
+    _graph_tools = None
 
     def __init__(self, method='Gradient', results_path=None, debug=False, serverless=True):
         self.debug = debug
         self.method = method
         self.serverless = serverless
+        self.results_path = results_path or 'clear_cut/results/misc'
 
         if not self.serverless:
-            self._get_or_create_results_dir(results_path, method)
+            self._get_or_create_results_dir()
+    
+    @property
+    def graph_tools(self):
+        if not self._graph_tools:
+            if self.serverless:
+                self._graph_tools = GraphTools(serverless=True, debug=self.debug)
+                return self._graph_tools
+
+            self._graph_tools = GraphTools(debug=self.debug)
+        
+        return self._graph_tools
 
     def merge_channels_of_traced_image(self, grdImg, origShape):
         """
@@ -32,18 +47,17 @@ class BaseTracer(object):
                     grdImg[i, j]
                     + grdImg[i, j + x_offset]
                     + grdImg[i, j + 2 * x_offset]
-                )/3
+                )
 
         # Reduce gradient array to original image shape. Max pool gradient array using 2x2 kernel
         return block_reduce(mrgdImg, (2, 2), np.max)
         
-    def _get_or_create_results_dir(self, results_path, method):
-        results_path = results_path or 'clear_cut/results/misc'
+    def _get_or_create_results_dir(self):
+        results_path = self.results_path
 
         # Create results directory if it doesn't yet exist
-        if "." in results_path:
-            results_path, _ = results_path.split(".")
+        if '.' in results_path:
+            results_path, _ = results_path.split('.')
 
-        self.results_path = "/".join([results_path, method])
-        if not os.path.isdir(self.results_path):
-            os.makedirs(self.results_path)
+        if not os.path.isdir(results_path):
+            os.makedirs(results_path)
