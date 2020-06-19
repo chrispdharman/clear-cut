@@ -64,8 +64,6 @@ class ClearCut(ImageUtils):
         )
 
         # Mask over the original image
-        import numpy as np
-
         wipe_mask = edgy_image < 0.01
         bold_mask = edgy_image > 0.01
         self.image[wipe_mask] = 255
