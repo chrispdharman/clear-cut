@@ -27,7 +27,7 @@ class ClearCut(ImageUtils):
     def tracer(self, method='gradient'):
         if not self._tracer:
             Tracer = pydoc.locate(
-                f'{self.base_path}clear_cut.utils.tracers.{method}.{str.capitalize(method)}Tracer'
+                f'clear_cut.utils.tracers.{method}.{str.capitalize(method)}Tracer'
             )
             self._tracer = Tracer(
                 results_path=self.results_filepath,

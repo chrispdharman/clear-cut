@@ -129,7 +129,7 @@ class GradientTracer(BaseTracer):
             self._print_if_debugging('Lost rows in compressing gradient. It can happen! Attempting to automatically dealing with it.')
             edge_array = np.concatenate((edge_array, np.zeros((1, edge_array.shape[1]))), axis = 0)
         else:
-            raise Exception("Gained rows in compressing gradient. Doesn't make sense!")
+            raise Exception('Gained rows in compressing gradient. Doesn\'t make sense!')
 
         y_miss = image_shape[1] - edge_array.shape[1]
         if y_miss == 0:
@@ -138,7 +138,7 @@ class GradientTracer(BaseTracer):
             self._print_if_debugging('Lost columns in compressing gradient. It can happen! Attempting to automatically dealing with it.')
             edge_array = np.concatenate((edge_array, np.zeros((edge_array.shape[0], 1))), axis=1)
         else:
-            raise Exception('Gained columns in compressing gradient. Doesn't make sense!')
+            raise Exception('Gained columns in compressing gradient. Doesn\'t make sense!')
 
         return edge_array
     
