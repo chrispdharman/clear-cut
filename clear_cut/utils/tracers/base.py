@@ -6,8 +6,10 @@ from skimage.measure import block_reduce
 
 class BaseTracer(object):
 
-    def __init__(self, method='Gradient', results_path=None):
+    def __init__(self, method='Gradient', results_path=None, debug=False, serverless=True):
+        self.debug = debug
         self.method = method
+        self.serverless = serverless
         self._get_or_create_results_dir(results_path, method)
 
     def merge_channels_of_traced_image(self, grdImg, origShape):
