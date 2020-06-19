@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from itertools import product
+from PIL import Image
 
 from clear_cut.utils.tracers.base import BaseTracer
 
@@ -90,31 +91,27 @@ class GradientTracer(BaseTracer):
         ## Otherwise save images in local results directory
 
         # Display separate rgb gradient images without cutoff applied
-        Image.fromarray(
-            np.absolute(grad_image.T)
-        ).save(
-            '{}/0003_gradient_image_raw.png'.format(self.results_path)
+        self.graph_tools.save_image(
+            np.absolute(grad_image.T),
+            filepath=f'{self.results_path}/0003_gradient_image_raw.png',
         )
 
         # Display separate rgb gradient images with cutoff applied
-        Image.fromarray(
-            np.multiply((np.absolute(grad_image.T) < (1-image_cut)*255),(np.absolute(grad_image.T) > image_cut*255))
-        ).save(
-            '{}/0004_gradient_image_cut.png'.format(self.results_path)
+        self.graph_tools.save_image(
+            np.multiply((np.absolute(grad_image.T) < (1-image_cut)*255),(np.absolute(grad_image.T) > image_cut*255)),
+            filepath=f'{self.results_path}/0004_gradient_image_cut.png',
         )
 
         # Display merged rgb gradient image without cutoff applied
-        Image.fromarray(
-            self.merge_channels_of_traced_image(grad_image.T, image_shape)
-        ).save(
-            '{}/0005_merged_image_raw.png'.format(self.results_path)
+        self.graph_tools.save_image(
+            self.merge_channels_of_traced_image(grad_image.T, image_shape),
+            filepath=f'{self.results_path}/0005_merged_image_raw.png',
         )
         
         # Display merged rgb gradient image with cutoff applied
-        Image.fromarray(
-            edge_array
-        ).save(
-            '{}/0006_merged_image_cut.png'.format(self.results_path)
+        self.graph_tools.save_image(
+            edge_array,
+            filepath=f'{self.results_path}/0006_merged_image_cut.png',
         )
 
         return edge_array

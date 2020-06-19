@@ -1,10 +1,13 @@
 import os
 import numpy as np
-
 from skimage.measure import block_reduce
+
+from clear_cut.utils.graph_tools import GraphTools
 
 
 class BaseTracer(object):
+
+    _graph_tools = None
 
     def __init__(self, method='Gradient', results_path=None, debug=False, serverless=True):
         self.debug = debug
@@ -13,6 +16,17 @@ class BaseTracer(object):
 
         if not self.serverless:
             self._get_or_create_results_dir(results_path, method)
+    
+    @property
+    def graph_tools(self):
+        if not self._graph_tools:
+            if self.serverless:
+                self._graph_tools = GraphTools(serverless=True, debug=self.debug)
+                return self._graph_tools
+
+            self._graph_tools = GraphTools(debug=self.debug)
+        
+        return self._graph_tools
 
     def merge_channels_of_traced_image(self, grdImg, origShape):
         """
