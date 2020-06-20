@@ -61,3 +61,7 @@ class BaseTracer(object):
 
         if not os.path.isdir(results_path):
             os.makedirs(results_path)
+
+    def _print_if_debugging(self, message):
+        if self.debug:
+            print(message)

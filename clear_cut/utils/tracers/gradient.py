@@ -3,6 +3,7 @@ import numpy as np
 from itertools import product
 from PIL import Image
 
+from clear_cut.utils import constants
 from clear_cut.utils.tracers.base import BaseTracer
 
 
@@ -14,6 +15,8 @@ class GradientTracer(BaseTracer):
         Object tracing one-layer gradient method
         GradImage: create numpy 2D array of size (2n-1) of the original
         '''
+        self._print_if_debugging('Generating gradient image ...')
+
         dimY, dimX, channels = image.shape
 
         # Append an image (in x-direction) for each of the separate channels
@@ -30,6 +33,7 @@ class GradientTracer(BaseTracer):
         y_range = range(0, 2 * (dimY - 1))
 
         for k in c_range:
+            self._print_if_debugging(f'... calculating for {constants.COLOUR_CHANNEL_MAP[k]} channel ...')
             x_offset = 2 * k * (dimX - 1)
 
             for i, j in product(x_range, y_range):
@@ -40,10 +44,11 @@ class GradientTracer(BaseTracer):
                     x_offset=x_offset,
                 )
 
+        self._print_if_debugging(f'... generated the gradient image.')
+
         edge_array = self.draw_edge_image(grad_image, image_shape=image.shape)
 
         # return an array of 0s (non-edges) and 1s (edges), same shape as passed in image
-        self._print_if_debugging(f'Is {image.shape} == {edge_array.shape}?')
         return edge_array
 
     def calculate_gradient_images_coordinates(self, image, grad_image, coordinate=None, x_offset=None):
@@ -86,12 +91,6 @@ class GradientTracer(BaseTracer):
 
         # Needs conversion back to (0, 255) scale
         edge_array = edge_array * 255
-
-        if self.serverless:
-            # Will need to set up to hit S3 here
-            return edge_array
-        
-        ## Otherwise save images in local results directory
 
         # Display separate rgb gradient images without cutoff applied
         self.graph_tools.save_image(
@@ -150,7 +149,3 @@ class GradientTracer(BaseTracer):
             (np.absolute(grad_image.T) < (1 - image_cut) * 255),
             (np.absolute(grad_image.T) > image_cut * 255)
         )
-    
-    def _print_if_debugging(self, message):
-        if self.debug:
-            print(message)
