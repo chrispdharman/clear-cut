@@ -65,11 +65,11 @@ class GraphTools(object):
 
         if self.serverless:
             # Will need to set up to hit S3 here
-            self._print_if_debugging(f'Saving image to remote storage.')
+            self._print_if_debugging(f'\t[Saving image to remote storage.]')
             return
         
         # Otherwise save image in local results directory
-        self._print_if_debugging(f'Saving image to local storage: {filepath}.')
+        self._print_if_debugging(f'\t[Saving image to local storage: {filepath}]')
         image_to_save = Image.fromarray(image)
 
         # See https://stackoverflow.com/questions/16720682/pil-cannot-write-mode-f-to-jpeg
