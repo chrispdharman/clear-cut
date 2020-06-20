@@ -13,19 +13,14 @@ class ClearCut(ImageUtils):
 
     _tracer = None
 
-    def __init__(self, results_path='', debug=False, serverless=True, **kwargs):
+    def __init__(self, debug=False, serverless=True, **kwargs):
         """
         If serverless, we must store results in S3 buckets
         """
         self.debug = debug
         self.serverless = serverless
 
-        self.results_path = results_path or os.getcwd()
-
-        if not self.results_path.endswith('/'):
-            self.results_path = f'{self.results_path}/'
-
-        self.default_image_selection(**kwargs)
+        self._default_image_selection(**kwargs)
     
     @property
     def tracer(self, method='gradient'):
@@ -40,24 +35,6 @@ class ClearCut(ImageUtils):
             )
         
         return self._tracer
-
-    def default_image_selection(self, **kwargs):
-        self.image_filename = kwargs.get('image_filename', 'Bob.jpeg')
-        self.image_size_threshold = kwargs.get('image_size_threshold', 600)
-        self.pixel_tolerance = kwargs.get('pixel_tolerance', 10)
-
-        images_path = f'/opt/python/' if self.serverless else f'{os.getcwd()}/venv/'
-        images_path = f'{images_path}lib/python3.7/site-packages/clear_cut/images/'
-
-        image_filepath = '/'.join([images_path, self.image_filename])
-
-        self.image = np.array(
-            self.graph_tools.upright_image(image_filepath=image_filepath)
-        )
-
-        filename, _ = self.image_filename.split('.')
-        self.results_path = f'{self.results_path}results/{filename}'
-        self.reduce_image_size()
 
     def run(self):
         # Determine segmentation edges of the image (default method = gradient)
@@ -81,7 +58,31 @@ class ClearCut(ImageUtils):
             filepath=f'{self.tracer.results_path}/0008_edge_masked_image.png',
         )
 
-    def reduce_image_size(self):
+    def _default_image_selection(self, **kwargs):
+        self.image_filename = kwargs.get('image_filename', 'Bob.jpeg')
+        self.image_size_threshold = kwargs.get('image_size_threshold', 600)
+        self.pixel_tolerance = kwargs.get('pixel_tolerance', 10)
+
+        images_path = f'/opt/python/' if self.serverless else f'{os.getcwd()}/venv/'
+        images_path = f'{images_path}lib/python3.7/site-packages/clear_cut/images/'
+
+        image_filepath = '/'.join([images_path, self.image_filename])
+
+        self.image = np.array(
+            self.graph_tools.upright_image(image_filepath=image_filepath)
+        )
+
+        self.results_path = kwargs.get('results_path') or os.getcwd()
+
+        if not self.results_path.endswith('/'):
+            self.results_path = f'{self.results_path}/'
+
+        filename, _ = self.image_filename.split('.')
+        self.results_path = f'{self.results_path}results/{filename}'
+
+        self._reduce_image_size()
+
+    def _reduce_image_size(self):
         # Build pooling dictionary
         pooling_history = defaultdict(lambda: defaultdict(tuple))
         pooling_history['iteration:0']['image_shape'] = self.image.shape
