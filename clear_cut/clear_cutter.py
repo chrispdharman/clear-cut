@@ -81,7 +81,7 @@ class ClearCut(ImageUtils):
 
         self._reduce_image_size()
 
-    def _determine_image_filepath(self, ):
+    def _determine_image_filepath(self):
         if self.image_filepath is not None:
             # Gives user full control over specifying the correct image file location
             return
