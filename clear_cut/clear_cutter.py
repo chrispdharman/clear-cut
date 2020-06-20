@@ -110,20 +110,20 @@ class ClearCut(ImageUtils):
             
             # Must assign within the loop to dynamicaly update the while condition
             self.image = image
-        
+
+        self.graph_tools.save_image(
+            self.image,
+            filepath=f'{self.tracer.results_path}/0001_size_reduced_image.png',
+        )
+
+        self.graph_tools.save_image(
+            self.image,
+            filepath=f'{self.tracer.results_path}/0002_size_reduced_image_channel_collage.png',
+            split_rgb_channels=True,
+        )
+
         # note that the final k is stored in "k"
         if self.debug:
             print('pooling_history={}'.format(
                 json.dumps(pooling_history, indent=4)
             ))
-
-            self.graph_tools.save_image(
-                self.image,
-                filepath=f'{self.tracer.results_path}/0001_size_reduced_image.png',
-            )
-
-            self.graph_tools.save_image(
-                self.image,
-                filepath=f'{self.tracer.results_path}/0002_size_reduced_image_channel_collage.png',
-                split_rgb_channels=True,
-            )
