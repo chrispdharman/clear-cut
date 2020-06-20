@@ -3,6 +3,7 @@ import numpy as np
 from itertools import product
 from PIL import Image
 
+from clear_cut.utils import constants
 from clear_cut.utils.tracers.base import BaseTracer
 
 
@@ -14,6 +15,8 @@ class GradientTracer(BaseTracer):
         Object tracing one-layer gradient method
         GradImage: create numpy 2D array of size (2n-1) of the original
         '''
+        self._print_if_debugging('\nGenerating gradient image ...')
+
         dimY, dimX, channels = image.shape
 
         # Append an image (in x-direction) for each of the separate channels
@@ -30,6 +33,7 @@ class GradientTracer(BaseTracer):
         y_range = range(0, 2 * (dimY - 1))
 
         for k in c_range:
+            self._print_if_debugging(f'... calculating for {constants.COLOUR_CHANNEL_MAP[k]} channel ...')
             x_offset = 2 * k * (dimX - 1)
 
             for i, j in product(x_range, y_range):
@@ -40,10 +44,11 @@ class GradientTracer(BaseTracer):
                     x_offset=x_offset,
                 )
 
+        self._print_if_debugging(f'... generated the gradient image.\n')
+
         edge_array = self.draw_edge_image(grad_image, image_shape=image.shape)
 
         # return an array of 0s (non-edges) and 1s (edges), same shape as passed in image
-        self._print_if_debugging(f'Is {image.shape} == {edge_array.shape}?')
         return edge_array
 
     def calculate_gradient_images_coordinates(self, image, grad_image, coordinate=None, x_offset=None):
@@ -75,6 +80,8 @@ class GradientTracer(BaseTracer):
         # Too small (shapes distinct but too much noise): 0.02
         # Maybe right? 0.07 (Bob.jpeg)
         # Too large (shaped not distinct enough): 0.10
+
+        self._print_if_debugging('\nCompressing gradient image to reduced image size ...')
         
         edge_array = self.tidy_edge_image_edges(
             self.merge_channels_of_traced_image(
@@ -87,11 +94,7 @@ class GradientTracer(BaseTracer):
         # Needs conversion back to (0, 255) scale
         edge_array = edge_array * 255
 
-        if self.serverless:
-            # Will need to set up to hit S3 here
-            return edge_array
-        
-        ## Otherwise save images in local results directory
+        self._print_if_debugging('... gradient image compressed to reduced image size.')
 
         # Display separate rgb gradient images without cutoff applied
         self.graph_tools.save_image(
@@ -124,21 +127,21 @@ class GradientTracer(BaseTracer):
         # This is akin to filling the colour of the edges with the same colour as their adjacent pixels
         x_miss = image_shape[0] - edge_array.shape[0]
         if x_miss == 0:
-            self._print_if_debugging('Same number of rows. Good!')
+            self._print_if_debugging('... same number of x rows. Good! ...')
         elif x_miss > 0:
-            self._print_if_debugging('Lost rows in compressing gradient. It can happen! Attempting to automatically dealing with it.')
+            self._print_if_debugging('... lost x rows in compressing gradient. It can happen! Automatically dealing with it ...')
             edge_array = np.concatenate((edge_array, np.zeros((1, edge_array.shape[1]))), axis = 0)
         else:
-            raise Exception('Gained rows in compressing gradient. Doesn\'t make sense!')
+            raise Exception('Gained x rows in compressing gradient. Doesn\'t make sense!')
 
         y_miss = image_shape[1] - edge_array.shape[1]
         if y_miss == 0:
-            self._print_if_debugging('Same number of columns. Good!')
+            self._print_if_debugging('... same number of y columns. Good! ...')
         elif y_miss > 0:
-            self._print_if_debugging('Lost columns in compressing gradient. It can happen! Attempting to automatically dealing with it.')
+            self._print_if_debugging('... lost y columns in compressing gradient. It can happen! Automatically dealing with it ...')
             edge_array = np.concatenate((edge_array, np.zeros((edge_array.shape[0], 1))), axis=1)
         else:
-            raise Exception('Gained columns in compressing gradient. Doesn\'t make sense!')
+            raise Exception('Gained y columns in compressing gradient. Doesn\'t make sense!')
 
         return edge_array
     
@@ -150,7 +153,3 @@ class GradientTracer(BaseTracer):
             (np.absolute(grad_image.T) < (1 - image_cut) * 255),
             (np.absolute(grad_image.T) > image_cut * 255)
         )
-    
-    def _print_if_debugging(self, message):
-        if self.debug:
-            print(message)

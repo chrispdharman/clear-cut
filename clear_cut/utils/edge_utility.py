@@ -87,6 +87,8 @@ class ImageUtils(object):
         Check and wipe out any edge pixels found within a pixel_tolerance radius.
         We refer to the radius of surround pixels as "the shell".
         """
+        self.graph_tools._print_if_debugging(f'Reducing image noise with pixel tolerance of {pixel_tolerance} ...')
+
         edge_coordinates = self.graph_tools.edge_pixel_positions(edge_image)
 
         for edge_coordinate in edge_coordinates:
@@ -97,7 +99,8 @@ class ImageUtils(object):
                 if noisy_shell_found:
                     edge_image = self.edge_kill(edge_image, edge_coordinate, radius=sub_radius-1, wipe=True)
                     break
-
+        
+        self.graph_tools._print_if_debugging(f'... image reduced of noise.')
         return edge_image
 
     def __within_radius(self, x, y, chosen_one, R=10):
