@@ -93,7 +93,7 @@ class ClearCut(ImageUtils):
         self.image_filepath = f'{images_path}lib/python3.7/site-packages/clear_cut/images/{image_filename}'
 
     def _reduce_image_size(self):
-        self._print_if_debugging('Reducing image size ...')
+        self.tracer._print_if_debugging('Reducing image size ...')
 
         # Build pooling dictionary
         pooling_history = defaultdict(lambda: defaultdict(tuple))
@@ -125,6 +125,6 @@ class ClearCut(ImageUtils):
         )
 
         # note that the final k is stored in "k"
-        self._print_if_debugging(
+        self.tracer._print_if_debugging(
             f'... finished with pooling history={json.dumps(pooling_history, indent=4)}'
         )
