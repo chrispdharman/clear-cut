@@ -59,21 +59,19 @@ class ClearCut(ImageUtils):
         )
 
     def _default_image_selection(self, **kwargs):
-        self.image_filename = kwargs.get('image_filename', 'Bob.jpeg')
+        # Assign overwritable ClearCut parameters. Otherwise, use defaults
+        self.image_filepath = kwargs.get('image_filepath')
         self.image_size_threshold = kwargs.get('image_size_threshold', 600)
         self.pixel_tolerance = kwargs.get('pixel_tolerance', 10)
 
-        images_path = f'/opt/python/' if self.serverless else f'{os.getcwd()}/venv/'
-        images_path = f'{images_path}lib/python3.7/site-packages/clear_cut/images/'
-
-        image_filepath = '/'.join([images_path, self.image_filename])
-
+        # Read in image
+        image_filepath = self._determine_image_filepath()
         self.image = np.array(
             self.graph_tools.upright_image(image_filepath=image_filepath)
         )
 
+        # Determine results path
         self.results_path = kwargs.get('results_path') or os.getcwd()
-
         if not self.results_path.endswith('/'):
             self.results_path = f'{self.results_path}/'
 
@@ -81,6 +79,17 @@ class ClearCut(ImageUtils):
         self.results_path = f'{self.results_path}results/{filename}'
 
         self._reduce_image_size()
+
+    def _determine_image_filepath(self, ):
+        if self.image_filename is not None:
+            # Gives user full control over specifying the correct image file location
+            return self.image_filename
+
+        # Fallback to our default Bob Ross image
+        self.image_filename = 'Bob.jpeg'
+        images_path = f'/opt/python/' if self.serverless else f'{os.getcwd()}/venv/'
+
+        return f'{images_path}lib/python3.7/site-packages/clear_cut/images/{self.image_filename}'
 
     def _reduce_image_size(self):
         # Build pooling dictionary
