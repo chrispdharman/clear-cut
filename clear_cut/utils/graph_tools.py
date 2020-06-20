@@ -18,7 +18,7 @@ class GraphTools(object):
 
         kernel_size = (kernel_height, kernel_width)
         return image, kernel_size
-    
+
     def crop_image(self, image, edge='both'):
         # Cut off a single pixel layer from the image
         if edge == 'height':
@@ -28,14 +28,14 @@ class GraphTools(object):
 
         # Cut both edges
         return image[:image.shape[0]-1, :image.shape[1]-1, :]
-    
+
     def edge_pixel_positions(self, edge_image):
         """
         Determine coordinates of edge pixels.
         :return: (N x 2) numpy array, where N is the number of edge pixels.
         """
         return np.argwhere(edge_image > 0.)
-    
+
     def find_lowest_denominator(self, image, image_length=None, edge='height'):
         for factor in range(2, image_length // 2):
             if not image_length % factor:
@@ -49,7 +49,7 @@ class GraphTools(object):
     def image_mean(self, image_shape):
         # Determine mean image size
         return (image_shape[0] + image_shape[1]) / 2
-    
+
     def reduce_image(self, image=None):
         # Calculate the smallest kernel size that fits into the image
         image, kernel = self.calculate_kernel_size(image)                
@@ -65,9 +65,11 @@ class GraphTools(object):
 
         if self.serverless:
             # Will need to set up to hit S3 here
+            self._print_if_debugging(f'\t[Saving image to remote storage.]')
             return
         
         # Otherwise save image in local results directory
+        self._print_if_debugging(f'\t[Saving image to local storage: {filepath}]')
         image_to_save = Image.fromarray(image)
 
         # See https://stackoverflow.com/questions/16720682/pil-cannot-write-mode-f-to-jpeg
@@ -91,7 +93,7 @@ class GraphTools(object):
                 )
             )
         )
-    
+
     @staticmethod
     def upright_image(image_filepath=None):
         '''
@@ -115,3 +117,7 @@ class GraphTools(object):
                 return np.rot90(image, k=-1)
 
         return image
+
+    def _print_if_debugging(self, message):
+        if self.debug:
+            print(message)
