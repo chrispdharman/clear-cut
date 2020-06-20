@@ -13,7 +13,7 @@ class BaseTracer(object):
         self.debug = debug
         self.method = method
         self.serverless = serverless
-        self.results_path = results_path or 'clear_cut/results/misc'
+        self.results_path = results_path
 
         if not self.serverless:
             self._get_or_create_results_dir()

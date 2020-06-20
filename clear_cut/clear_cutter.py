@@ -1,5 +1,6 @@
 import pydoc
 import json
+import os
 import time
 import numpy as np
 from collections import defaultdict
@@ -12,16 +13,14 @@ class ClearCut(ImageUtils):
 
     _tracer = None
 
-    def __init__(self, base_path='', debug=False, serverless=True, **kwargs):
+    def __init__(self, debug=False, serverless=True, **kwargs):
         """
         If serverless, we must store results in S3 buckets
         """
-        self.base_path = '/opt/python/lib/python3.7/site-packages/' if serverless else base_path
         self.debug = debug
         self.serverless = serverless
-        
-        self.base_dir = f'{self.base_path}clear_cut/images'
-        self.default_image_selection(**kwargs)
+
+        self._default_image_selection(**kwargs)
     
     @property
     def tracer(self, method='gradient'):
@@ -30,26 +29,12 @@ class ClearCut(ImageUtils):
                 f'clear_cut.utils.tracers.{method}.{str.capitalize(method)}Tracer'
             )
             self._tracer = Tracer(
-                results_path=self.results_filepath,
+                results_path=self.results_path,
                 debug=self.debug,
                 serverless=self.serverless,
             )
         
         return self._tracer
-
-    def default_image_selection(self, **kwargs):
-        self.image_filename = kwargs.get('image_filename', 'Bob.jpeg')
-
-        self.image_filepath = '/'.join([self.base_dir, self.image_filename])
-        self.image_size_threshold = kwargs.get('image_size_threshold', 600)
-        self.pixel_tolerance = kwargs.get('pixel_tolerance', 10)
-
-        self.image_raw = self.graph_tools.upright_image(image_filepath=self.image_filepath)
-        self.image = np.array(self.image_raw)
-
-        filename, _ = self.image_filename.split('.')
-        self.results_filepath = f'{self.base_path}results/{filename}'
-        self.reduce_image_size()
 
     def run(self):
         # Determine segmentation edges of the image (default method = gradient)
@@ -73,7 +58,41 @@ class ClearCut(ImageUtils):
             filepath=f'{self.tracer.results_path}/0008_edge_masked_image.png',
         )
 
-    def reduce_image_size(self):
+    def _default_image_selection(self, **kwargs):
+        # Assign overwritable ClearCut parameters. Otherwise, use defaults
+        self.image_filepath = kwargs.get('image_filepath')
+        self.image_size_threshold = kwargs.get('image_size_threshold', 600)
+        self.pixel_tolerance = kwargs.get('pixel_tolerance', 10)
+
+        # Read in image
+        self._determine_image_filepath()
+        self.image = np.array(
+            self.graph_tools.upright_image(image_filepath=self.image_filepath)
+        )
+
+        # Determine results path
+        self.results_path = kwargs.get('results_path') or os.getcwd()
+        if not self.results_path.endswith('/'):
+            self.results_path = f'{self.results_path}/'
+
+        image_filename = self.image_filepath.split('/')[-1]
+        filename, _ = image_filename.split('.')
+        self.results_path = f'{self.results_path}results/{filename}'
+
+        self._reduce_image_size()
+
+    def _determine_image_filepath(self):
+        if self.image_filepath is not None:
+            # Gives user full control over specifying the correct image file location
+            return
+
+        # Fallback to our default Bob Ross image
+        images_path = f'/opt/python/' if self.serverless else f'{os.getcwd()}/venv/'
+        image_filename = 'Bob.jpeg'
+
+        self.image_filepath = f'{images_path}lib/python3.7/site-packages/clear_cut/images/{image_filename}'
+
+    def _reduce_image_size(self):
         # Build pooling dictionary
         pooling_history = defaultdict(lambda: defaultdict(tuple))
         pooling_history['iteration:0']['image_shape'] = self.image.shape
@@ -100,11 +119,11 @@ class ClearCut(ImageUtils):
 
             self.graph_tools.save_image(
                 self.image,
-                filepath='{}/0001_size_reduced_image.png'.format(self.tracer.results_path),
+                filepath=f'{self.tracer.results_path}/0001_size_reduced_image.png',
             )
 
             self.graph_tools.save_image(
                 self.image,
-                filepath='{}/0002_size_reduced_image_channel_collage.png'.format(self.tracer.results_path),
+                filepath=f'{self.tracer.results_path}/0002_size_reduced_image_channel_collage.png',
                 split_rgb_channels=True,
             )
