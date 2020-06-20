@@ -1,5 +1,6 @@
 import pydoc
 import json
+import os
 import time
 import numpy as np
 from collections import defaultdict
@@ -12,15 +13,18 @@ class ClearCut(ImageUtils):
 
     _tracer = None
 
-    def __init__(self, base_path='', debug=False, serverless=True, **kwargs):
+    def __init__(self, results_path='', debug=False, serverless=True, **kwargs):
         """
         If serverless, we must store results in S3 buckets
         """
-        self.base_path = '/opt/python/lib/python3.7/site-packages/' if serverless else base_path
         self.debug = debug
         self.serverless = serverless
-        
-        self.base_dir = f'{self.base_path}clear_cut/images'
+
+        self.results_path = results_path or os.getcwd()
+
+        if not self.results_path.endswith('/'):
+            self.results_path = f'{self.results_path}/'
+
         self.default_image_selection(**kwargs)
     
     @property
@@ -30,7 +34,7 @@ class ClearCut(ImageUtils):
                 f'clear_cut.utils.tracers.{method}.{str.capitalize(method)}Tracer'
             )
             self._tracer = Tracer(
-                results_path=self.results_filepath,
+                results_path=self.results_path,
                 debug=self.debug,
                 serverless=self.serverless,
             )
@@ -39,16 +43,20 @@ class ClearCut(ImageUtils):
 
     def default_image_selection(self, **kwargs):
         self.image_filename = kwargs.get('image_filename', 'Bob.jpeg')
-
-        self.image_filepath = '/'.join([self.base_dir, self.image_filename])
         self.image_size_threshold = kwargs.get('image_size_threshold', 600)
         self.pixel_tolerance = kwargs.get('pixel_tolerance', 10)
 
-        self.image_raw = self.graph_tools.upright_image(image_filepath=self.image_filepath)
-        self.image = np.array(self.image_raw)
+        images_path = f'/opt/python/' if self.serverless else f'{os.getcwd()}/venv/'
+        images_path = f'{images_path}lib/python3.7/site-packages/clear_cut/images/'
+
+        image_filepath = '/'.join([images_path, self.image_filename])
+
+        self.image = np.array(
+            self.graph_tools.upright_image(image_filepath=image_filepath)
+        )
 
         filename, _ = self.image_filename.split('.')
-        self.results_filepath = f'{self.base_path}results/{filename}'
+        self.results_path = f'{self.results_path}results/{filename}'
         self.reduce_image_size()
 
     def run(self):
@@ -100,11 +108,11 @@ class ClearCut(ImageUtils):
 
             self.graph_tools.save_image(
                 self.image,
-                filepath='{}/0001_size_reduced_image.png'.format(self.tracer.results_path),
+                filepath=f'{self.tracer.results_path}/0001_size_reduced_image.png',
             )
 
             self.graph_tools.save_image(
                 self.image,
-                filepath='{}/0002_size_reduced_image_channel_collage.png'.format(self.tracer.results_path),
+                filepath=f'{self.tracer.results_path}/0002_size_reduced_image_channel_collage.png',
                 split_rgb_channels=True,
             )
