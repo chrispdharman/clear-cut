@@ -5,9 +5,8 @@ from skimage.measure import block_reduce
 
 class GraphTools(object):
 
-    def __init__(self, serverless=False, debug=False):
+    def __init__(self, debug=False):
         self.debug = debug
-        self.serverless = serverless
 
     def calculate_kernel_size(self, image):
         # Determine kernel size from image
@@ -62,11 +61,6 @@ class GraphTools(object):
     def save_image(self, image, filepath=None, split_rgb_channels=False):
         if split_rgb_channels:
             image = self.split_rgb_channels(image)
-
-        if self.serverless:
-            # Will need to set up to hit S3 here
-            self._print_if_debugging(f'\t[Saving image to remote storage.]')
-            return
         
         # Otherwise save image in local results directory
         self._print_if_debugging(f'\t[Saving image to local storage: {filepath}]')

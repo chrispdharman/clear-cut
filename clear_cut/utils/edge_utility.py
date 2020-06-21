@@ -10,7 +10,6 @@ from clear_cut.utils.graph_tools import GraphTools
 class ImageUtils(object):
 
     debug = False
-    serverless = True
     _graph_tools = None
 
     def __init__(self):
@@ -20,10 +19,6 @@ class ImageUtils(object):
     @property
     def graph_tools(self):
         if not self._graph_tools:
-            if self.serverless:
-                self._graph_tools = GraphTools(serverless=True, debug=self.debug)
-                return self._graph_tools
-
             self._graph_tools = GraphTools(debug=self.debug)
         
         return self._graph_tools
