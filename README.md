@@ -21,10 +21,9 @@ results_path = '/Users/myusername/Desktop/mock/'
 
 # All kwargs are optional
 #   param debug: toggles on/off output to terminal
-#   param serverless: toggles whether to save generated images to local or remote (publicly-accessible) storage
 #   param results_path: sets results directory. Omitting this parameter will write results to current working directory
 #   param image_filepath: location to image. Omitting this parameter will use a default Bob Ross image instead
-clear_cut = ClearCut(debug=True, serverless=False, image_filepath=image_filepath, results_path=results_path)
+clear_cut = ClearCut(debug=True, image_filepath=image_filepath, results_path=results_path)
 clear_cut.run()
 ```
 

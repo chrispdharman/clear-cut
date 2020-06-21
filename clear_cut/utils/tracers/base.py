@@ -9,22 +9,17 @@ class BaseTracer(object):
 
     _graph_tools = None
 
-    def __init__(self, method='Gradient', results_path=None, debug=False, serverless=True):
+    def __init__(self, method='Gradient', results_path=None, debug=False, serverless=False):
         self.debug = debug
         self.method = method
-        self.serverless = serverless
         self.results_path = results_path
 
-        if not self.serverless:
+        if not serverless:
             self._get_or_create_results_dir()
     
     @property
     def graph_tools(self):
         if not self._graph_tools:
-            if self.serverless:
-                self._graph_tools = GraphTools(serverless=True, debug=self.debug)
-                return self._graph_tools
-
             self._graph_tools = GraphTools(debug=self.debug)
         
         return self._graph_tools

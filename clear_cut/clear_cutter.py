@@ -13,7 +13,7 @@ class ClearCut(ImageUtils):
 
     _tracer = None
 
-    def __init__(self, debug=False, serverless=True, **kwargs):
+    def __init__(self, debug=False, serverless=False, **kwargs):
         """
         If serverless, we must store results in S3 buckets
         """
