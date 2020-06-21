@@ -12,7 +12,7 @@ requirements = read('requirements.txt').splitlines()
 
 setuptools.setup(
     name='clear-cut',
-    version='1.4.0',
+    version='1.4.1',
     description='Number crunching backend to extract edges from a provided image',
     long_description=open('README.md', 'r').read(),
     long_description_content_type='text/markdown',
