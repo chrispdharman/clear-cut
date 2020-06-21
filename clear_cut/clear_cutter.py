@@ -31,7 +31,6 @@ class ClearCut(ImageUtils):
             self._tracer = Tracer(
                 results_path=self.results_path,
                 debug=self.debug,
-                serverless=self.serverless,
             )
         
         return self._tracer
